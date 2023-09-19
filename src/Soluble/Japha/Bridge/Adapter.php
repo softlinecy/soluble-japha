@@ -45,7 +45,6 @@ class Adapter
 
     /**
      * Constructor.
-     *
      * <code>
      * $ba = new Adapter([
      *     'driver' => 'Pjb62',
@@ -56,17 +55,10 @@ class Adapter
      *      //'force_simple_xml_parser' => false
      *      //'java_log_level' => null // set it to 0,1,2,3,4,5,6 to see errors in tomcat log
      *    ]);
-     *
      * </code>
      *
-     *
-     * @throws Exception\UnsupportedDriverException
-     * @throws Exception\InvalidArgumentException
-     * @throws Exception\ConfigurationException
-     * @throws Exception\ConnectionException
-     *
-     * @param array<string, mixed> $options
-     * @param LoggerInterface      $logger  any PSR-3 compatible logger
+     * @param  array<string, mixed>  $options
+     * @param  LoggerInterface|null  $logger  any PSR-3 compatible logger
      */
     public function __construct(array $options, LoggerInterface $logger = null)
     {

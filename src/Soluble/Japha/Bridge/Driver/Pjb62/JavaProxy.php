@@ -154,9 +154,9 @@ class JavaProxy implements JavaType
         $this->__client->setProperty($this->__java, $key, $val);
     }
 
-    public function __call(string $method, array $args)
+    public function __call(string $name, array $arguments)
     {
-        return $this->__client->invokeMethod($this->__java, $method, $args);
+        return $this->__client->invokeMethod($this->__java, $name, $arguments);
     }
 
     /**

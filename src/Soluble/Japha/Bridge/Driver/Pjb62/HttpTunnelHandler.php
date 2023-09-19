@@ -72,9 +72,8 @@ class HttpTunnelHandler extends SimpleHttpTunnelHandler
                     'Cannot write from socket.'
                 );
             }
-        } else {
-            return parent::fwrite($data);
         }
+        return parent::fwrite($data);
     }
 
     public function close(): void

@@ -116,9 +116,9 @@ class JavaException extends Exception implements JavaType
         $this->__delegate->__set($key, $val);
     }
 
-    public function __call(string $method, array $args)
+    public function __call(string $name, array $arguments)
     {
-        return $this->__delegate->__call($method, $args);
+        return $this->__delegate->__call($name, $arguments);
     }
 
     /**

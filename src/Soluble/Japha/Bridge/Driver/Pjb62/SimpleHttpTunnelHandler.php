@@ -235,7 +235,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
             $headers[] = $cookieHeaderLine;
         }
 
-        if (($context = trim($this->getContext())) !== '') {
+        if (($context = trim($this->getContext() ?? '')) !== '') {
             $headers[] = $context;
         }
 

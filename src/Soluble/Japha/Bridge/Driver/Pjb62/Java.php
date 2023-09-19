@@ -161,19 +161,19 @@ class Java extends AbstractJava
     /**
      * Call a method on this JavaObject.
      *
-     * @param string $method
-     * @param array  $args
+     * @param string $name
+     * @param array  $arguments
      *
      * @return mixed|null
      */
-    public function __call(string $method, array $args)
+    public function __call(string $name, array $arguments)
     {
         $client = $this->__client;
-        $sig = "@{$this->__signature}@$method";
-        $len = count($args);
+        $sig = "@{$this->__signature}@$name";
+        $len = count($arguments);
         $args2 = [$this->__java];
         for ($i = 0; $i < $len; ++$i) {
-            switch (gettype($val = $args[$i])) {
+            switch (gettype($val = $arguments[$i])) {
                 case 'boolean':
                     $args2[] = $val;
                     $sig .= '@b';
@@ -242,7 +242,7 @@ class Java extends AbstractJava
             }
         } else {
             $client->currentCacheKey = $sig;
-            $retval = parent::__call($method, $args);
+            $retval = parent::__call($name, $arguments);
 
             return $retval;
         }

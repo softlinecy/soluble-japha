@@ -77,10 +77,10 @@ interface JavaType extends Interfaces\JavaType
     public function __set(string $key, $val): void;
 
     /**
-     * @param string $method
-     * @param array  $args
+     * @param string $name
+     * @param array  $arguments
      */
-    public function __call(string $method, array $args);
+    public function __call(string $name, array $arguments);
 
     public function __cast(string $type);
 

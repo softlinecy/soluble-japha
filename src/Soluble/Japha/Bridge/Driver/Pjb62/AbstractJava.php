@@ -42,7 +42,9 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Exception;
 use Soluble\Japha\Interfaces;
+use Traversable;
 
 abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaType, Interfaces\JavaObject
 {
@@ -81,7 +83,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      *
      * @return mixed
      */
-    public function __cast(string $type)
+    public function __cast(string $type) : mixed
     {
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
@@ -156,28 +158,52 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      * to access the Java object method (and not the PHP
      * remote proxied object).
      *
-     * @throws \Exception Depending on ThrowExceptionProxy
-     *
-     * @param string $method
-     * @param array  $args
+     * @param string $name
+     * @param array  $arguments
      *
      * @return mixed
+     *@throws \Exception Depending on ThrowExceptionProxy
      */
-    public function __call(string $method, array $args)
+    public function __call(string $name, array $arguments)
     {
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
 
-        return $this->__delegate->__call($method, $args);
+        return $this->__delegate->__call($name, $arguments);
     }
 
     /**
-     * @param mixed|null ...$args arguments
+     * @param  string|int  $offset
+     * @param  mixed|null  ...$args
      *
-     * @return ObjectIterator
+     * @return bool
+     * @throws Exception
      */
-    public function getIterator(...$args)
+    public function offsetExists($offset, ...$args): bool
+    {
+        if (!isset($this->__delegate)) {
+            $this->__createDelegate();
+        }
+        if (empty($args)) {
+            return $this->__delegate->offsetExists($offset);
+        }
+
+        // In case we supplied more arguments than what ArrayAccess
+        // suggest, let's try for a java method called offsetExists
+        // with all the provided parameters
+        array_unshift($args, $offset); // Will add idx at the beginning of args params
+
+        return $this->__call('offsetExists', $args);
+    }
+
+    /**
+     * @param  mixed|null  ...$args  arguments
+     *
+     * @return Traversable
+     * @throws Exception
+     */
+    public function getIterator(...$args) : Traversable
     {
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
@@ -191,85 +217,65 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
     }
 
     /**
-     * @param string|int $idx
-     * @param mixed|null ...$args
-     *
-     * @return bool
-     */
-    public function offsetExists($idx, ...$args): bool
-    {
-        if (!isset($this->__delegate)) {
-            $this->__createDelegate();
-        }
-        if (empty($args)) {
-            return $this->__delegate->offsetExists($idx);
-        }
-
-        // In case we supplied more arguments than what ArrayAccess
-        // suggest, let's try for a java method called offsetExists
-        // with all the provided parameters
-        array_unshift($args, $idx); // Will add idx at the beginning of args params
-
-        return $this->__call('offsetExists', $args);
-    }
-
-    /**
-     * @param string|int $idx
-     * @param mixed|null ...$args additional arguments
+     * @param  string|int  $offset
+     * @param  mixed|null  ...$args  additional arguments
      *
      * @return mixed
+     * @throws Exception
      */
-    public function offsetGet($idx, ...$args)
+    public function offsetGet($offset, ...$args): mixed
     {
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
         if (empty($args)) {
-            return $this->__delegate->offsetGet($idx);
+            return $this->__delegate->offsetGet($offset);
         }
-        array_unshift($args, $idx);
+        array_unshift($args, $offset);
 
         return $this->__call('offsetGet', $args);
     }
 
     /**
-     * @param string|int $idx
-     * @param mixed      $val
-     * @param mixed|null ...$args additional arguments
+     * @param  string|int  $offset
+     * @param  mixed  $value
+     * @param  mixed|null  ...$args  additional arguments
      *
-     * @return mixed
+     * @return void
+     * @throws Exception
      */
-    public function offsetSet($idx, $val, ...$args)
+    public function offsetSet($offset, mixed $value, ...$args): void
     {
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
         if (empty($args)) {
-            return $this->__delegate->offsetSet($idx, $val);
+            $this->__delegate->offsetSet($offset, $value);
         }
 
-        array_unshift($args, $idx, $val);
+        array_unshift($args, $offset, $value);
 
-        return $this->__call('offsetSet', $args);
+        $this->__call('offsetSet', $args);
     }
 
     /**
-     * @param mixed      $idx
-     * @param mixed|null ...$args additional arguments
+     * @param  mixed  $offset
+     * @param  mixed|null  ...$args  additional arguments
      *
-     * @return mixed|void
+     * @return void
+     * @throws Exception
      */
-    public function offsetUnset($idx, ...$args)
+    public function offsetUnset(mixed $offset, ...$args) : void
     {
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
         if (empty($args)) {
-            return $this->__delegate->offsetUnset($idx);
+            $this->__delegate->offsetUnset($offset);
         }
-        array_unshift($args, $idx);
+        array_unshift($args, $offset);
 
-        return $this->__call('offsetUnset', $args);
+        $this->__call('offsetUnset', $args);
     }
 
     /**
@@ -291,7 +297,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function get__signature(): ?string
     {

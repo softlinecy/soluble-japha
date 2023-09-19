@@ -11,20 +11,10 @@ use Soluble\Japha\Bridge\Driver\Pjb62\Client;
 
 class DefaultThrowExceptionProxyFactory extends Pjb62\ThrowExceptionProxyFactory
 {
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
 
-    /**
-     * @var string
-     */
-    protected $defaultException = 'JavaException';
+    protected string $defaultException = 'JavaException';
 
-    /**
-     * @var array
-     */
-    protected $msgPatternsMapping = [
+    protected  array $msgPatternsMapping = [
         'NoSuchMethodException' => '/(php.java.bridge.NoSuchProcedureException)|(Cause: java.lang.NoSuchMethodException)/',
         'ClassNotFoundException' => '/Cause: java.lang.ClassNotFoundException/',
         //'InvalidArgumentException' => '/^Invoke failed(.*)php.java.bridge.NoSuchProcedureException/',
@@ -37,10 +27,9 @@ class DefaultThrowExceptionProxyFactory extends Pjb62\ThrowExceptionProxyFactory
      * @param Client          $client
      * @param LoggerInterface $logger
      */
-    public function __construct(Client $client, LoggerInterface $logger)
+    public function __construct(Client $client, protected LoggerInterface $logger)
     {
         parent::__construct($client);
-        $this->logger = $logger;
     }
 
     /**
