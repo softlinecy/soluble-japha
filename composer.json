@@ -38,7 +38,7 @@
         "phpstan/phpstan": "^0.12.84",
         "phpstan/phpstan-strict-rules": "^0.12.9",
         "phpstan/phpstan-phpunit": "^0.12.17",
-        "softlinecy/pjbserver-tools": "^6.0",
+        "softlinecy/pjbserver-tools": "^6.0.0",
         "infection/infection": "^0.27.2",
         "dms/phpunit-arraysubset-asserts": "^v0.2.1"
     },
