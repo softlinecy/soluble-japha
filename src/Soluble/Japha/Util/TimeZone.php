@@ -12,7 +12,11 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Util;
 
-use Soluble\Japha\Bridge;
+use Soluble\Japha\Bridge\Adapter;
+use Soluble\Japha\Interfaces\JavaClass;
+use Soluble\Japha\Interfaces\JavaObject;
+use Soluble\Japha\Util\Exception\InvalidArgumentException;
+use Soluble\Japha\Util\Exception\UnsupportedTzException;
 use Soluble\Japha\Interfaces;
 use DateTimeZone;
 
@@ -24,11 +28,6 @@ class TimeZone
      * @var bool
      */
     protected static $enableTzCache = true;
-
-    /**
-     * @var Bridge\Adapter
-     */
-    protected $ba;
 
     /**
      * Cache for availableTz.
@@ -47,21 +46,15 @@ class TimeZone
     /**
      * @var Interfaces\JavaClass Java(java.util.Timezone)
      */
-    protected $timeZoneClass;
+    protected JavaClass $timeZoneClass;
 
-    /**
-     * @param Bridge\Adapter $ba
-     */
-    public function __construct(Bridge\Adapter $ba)
+    public function __construct(protected Adapter $ba)
     {
-        $this->ba = $ba;
-        $this->timeZoneClass = $ba->javaClass('java.util.TimeZone');
+        $this->timeZoneClass = $this->ba->javaClass('java.util.TimeZone');
     }
 
     /**
      * Return java available timezone ids.
-     *
-     * @return array
      */
     public function getAvailableIDs(): array
     {
@@ -96,7 +89,7 @@ class TimeZone
      *
      * @return Interfaces\JavaObject Java('java.util.TimeZone')
      */
-    public function getDefault($enableTzCache = true): Interfaces\JavaObject
+    public function getDefault($enableTzCache = true): JavaObject
     {
         $enableCache = $enableTzCache && self::$enableTzCache;
         if (!$enableCache || self::$defaultTz === null) {
@@ -117,14 +110,14 @@ class TimeZone
      *
      * @return Interfaces\JavaObject Java('java.util.TimeZone')
      */
-    public function getTimeZone($id): Interfaces\JavaObject
+    public function getTimeZone($id): JavaObject
     {
         if ($id instanceof DateTimeZone) {
             $phpTimezone = $id->getName();
-        } elseif (is_string($id) && trim($id) != '') {
+        } elseif (is_string($id) && trim($id) !== '') {
             $phpTimezone = $id;
         } else {
-            throw new Exception\InvalidArgumentException('Method getTimeZone($id) require argument to be datetimeZone or a non empty string');
+            throw new InvalidArgumentException('Method getTimeZone($id) require argument to be datetimeZone or a non empty string');
         }
 
         /**
@@ -141,7 +134,7 @@ class TimeZone
                 "The timezone id '%s' could not be understood by JVM (JVM returned defaulted to GMT)",
                 $id instanceof DateTimeZone ? $id->getName() : $id
             );
-            throw new Exception\UnsupportedTzException($msg);
+            throw new UnsupportedTzException($msg);
         }
 
         return $tz;
@@ -160,6 +153,7 @@ class TimeZone
         if (is_string($timeZone) || $timeZone instanceof DateTimeZone) {
             $timeZone = $this->getTimeZone($timeZone);
         }
+        
         $this->timeZoneClass->setDefault($timeZone);
         self::$defaultTz = $timeZone;
     }

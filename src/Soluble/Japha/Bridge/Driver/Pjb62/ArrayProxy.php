@@ -43,8 +43,6 @@ class ArrayProxy extends IteratorProxy
 {
     /**
      * @param string $idx
-     *
-     * @return bool
      */
     public function offsetExists($idx): bool
     {
@@ -67,9 +65,8 @@ class ArrayProxy extends IteratorProxy
 
     /**
      * @param string|int $idx
-     * @param mixed      $val
      */
-    public function offsetSet($idx, $val)
+    public function offsetSet($idx, mixed $val)
     {
         $ar = [$this, $idx, $val];
 

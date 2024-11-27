@@ -59,18 +59,13 @@ class CompositeArg extends Arg
     /**
      * @var int
      */
-    public $counter;
+    public $counter = 0;
 
-    /**
-     * @param Client $client
-     * @param string $type
-     */
     public function __construct(Client $client, string $type)
     {
         parent::__construct($client);
         $this->type = $type;
         $this->val = [];
-        $this->counter = 0;
     }
 
     public function setNextIndex(): void
@@ -78,10 +73,7 @@ class CompositeArg extends Arg
         $this->idx = $this->counter++;
     }
 
-    /**
-     * @param mixed $val
-     */
-    public function setIndex($val): void
+    public function setIndex(mixed $val): void
     {
         $this->idx = $val;
     }

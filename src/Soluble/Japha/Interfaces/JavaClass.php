@@ -24,8 +24,6 @@ interface JavaClass extends JavaObject
     /**
      * Returns the name of the entity (class, interface, array class, primitive type, or void)
      * represented by this class object, as a string.
-     *
-     * @return string
      */
     public function getName(): string;
 }

@@ -39,25 +39,37 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\RuntimeException;
+use Soluble\Japha\Interfaces\JavaObject;
 use ArrayObject;
 use Psr\Log\LoggerInterface;
 use Soluble\Japha\Bridge\Exception\JavaException;
-use Soluble\Japha\Interfaces;
 use Soluble\Japha\Bridge\Driver\Pjb62\Utils\HelperFunctions;
 
 class Client
 {
     public const PARAM_JAVA_HOSTS = 'JAVA_HOSTS';
+    
     public const PARAM_JAVA_SERVLET = 'JAVA_SERVLET';
+    
     public const PARAM_JAVA_AUTH_USER = 'JAVA_AUTH_USER';
+    
     public const PARAM_JAVA_AUTH_PASSWORD = 'JAVA_AUTH_PASSWORD';
+    
     public const PARAM_JAVA_DISABLE_AUTOLOAD = 'JAVA_DISABLE_AUTOLOAD';
+    
     public const PARAM_JAVA_PREFER_VALUES = 'JAVA_PREFER_VALUES';
+    
     public const PARAM_JAVA_SEND_SIZE = 'JAVA_SEND_SIZE';
+    
     public const PARAM_JAVA_RECV_SIZE = 'JAVA_RECV_SIZE';
+    
     public const PARAM_JAVA_LOG_LEVEL = 'JAVA_LOG_LEVEL';
+    
     public const PARAM_JAVA_INTERNAL_ENCODING = 'JAVA_INTERNAL_ENCODING';
+    
     public const PARAM_XML_PARSER_FORCE_SIMPLE_PARSER = 'XML_PARSER_FORCE_SIMPLE_PARSER';
+    
     public const PARAM_USE_PERSISTENT_CONNECTION = 'USE_PERSISTENT_CONNECTION';
 
     public const DEFAULT_PARAMS = [
@@ -78,9 +90,12 @@ class Client
     /**
      * @var array
      */
-    public $RUNTIME;
+    public $RUNTIME = [];
+    
     public $result;
+    
     public $exception;
+    
     /**
      * @var ParserFactory
      */
@@ -130,34 +145,41 @@ class Client
      * @var Arg|CompositeArg
      */
     public $arg;
+    
     /**
      * @var int
      */
-    public $asyncCtx;
+    public $asyncCtx = 0;
 
     /**
      * @var int
      */
-    public $cancelProxyCreationTag;
+    public $cancelProxyCreationTag = 0;
 
     /**
      * @var GlobalRef
      */
     public $globalRef;
+    
     public $stack;
+    
     /**
      * @var array
      */
     public $defaultCache = [];
+    
     /**
      * @var array
      */
     public $asyncCache = [];
+    
     /**
      * @var array
      */
     public $methodCache = [];
+    
     public $isAsync = 0;
+    
     /**
      * @var string|null
      */
@@ -167,17 +189,23 @@ class Client
      * @var string
      */
     public $currentArgumentsFormat;
+    
+    /**
+     * @var \Soluble\Japha\Bridge\Driver\Pjb62\JavaProxyProxy
+     */
     public $cachedJavaPrototype;
 
     /**
      * @var string|null
      */
     public $sendBuffer;
+    
     /**
      * @var string|null
      */
     public $preparedToSendBuffer;
-    public $inArgs;
+    
+    public $inArgs = false;
 
     /**
      * @var int
@@ -192,12 +220,12 @@ class Client
     /**
      * @var array
      */
-    protected $cachedValues = [];
+    protected $cachedValues = [
+        'getContext' => null,
+        'getServerName' => null
+    ];
 
-    /**
-     * @var ArrayObject
-     */
-    protected $params;
+    protected \ArrayObject $params;
 
     /**
      * @var string
@@ -219,27 +247,15 @@ class Client
      */
     public $java_send_size;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @param ArrayObject $params
-     */
-    public function __construct(ArrayObject $params, LoggerInterface $logger)
+    public function __construct(ArrayObject $params, protected LoggerInterface $logger)
     {
         $this->params = new ArrayObject(array_merge(self::DEFAULT_PARAMS, (array) $params));
-
-        $this->logger = $logger;
 
         $this->java_send_size = $this->params[self::PARAM_JAVA_SEND_SIZE];
         $this->java_recv_size = $this->params[self::PARAM_JAVA_RECV_SIZE];
 
         $this->java_hosts = $this->params['JAVA_HOSTS'];
         $this->java_servlet = $this->params['JAVA_SERVLET'];
-
-        $this->RUNTIME = [];
         $this->RUNTIME['NOTICE'] = '***USE echo $adapter->getDriver()->inspect(jVal) OR print_r($adapter->values(jVal)) TO SEE THE CONTENTS OF THIS JAVA OBJECT!***';
         $this->parser = new ParserFactory($this, $params['XML_PARSER_FORCE_SIMPLE_PARSER'] ?? false);
         $this->protocol = new Protocol($this, $this->java_hosts, $this->java_servlet, $this->java_recv_size, $this->java_send_size);
@@ -252,14 +268,7 @@ class Client
         $this->cachedJavaPrototype = new JavaProxyProxy($this);
         $this->simpleArg = new Arg($this);
         $this->globalRef = new GlobalRef();
-        $this->asyncCtx = $this->cancelProxyCreationTag = 0;
         $this->methodCache = $this->defaultCache;
-        $this->inArgs = false;
-
-        $this->cachedValues = [
-            'getContext' => null,
-            'getServerName' => null
-        ];
     }
 
     public function getLogger(): LoggerInterface
@@ -267,7 +276,7 @@ class Client
         return $this->logger;
     }
 
-    public function read($size): string
+    public function read(int $size): string
     {
         return $this->protocol->read($size);
     }
@@ -302,18 +311,17 @@ class Client
                 } else {
                     $msg = 'Error: $arg should be of type ApplyArg, error in client';
                     $this->logger->critical($msg);
-                    throw new Exception\RuntimeException($msg);
+                    throw new RuntimeException($msg);
                 }
+                
                 $tail_call = true;
             }
+            
             $this->stack = null;
         } while ($tail_call);
     }
 
-    /**
-     * @param bool $wrap
-     */
-    public function getWrappedResult($wrap)
+    public function getWrappedResult(bool $wrap)
     {
         return $this->simpleArg->getResult($wrap);
     }
@@ -328,36 +336,21 @@ class Client
         return $this->getWrappedResult(true);
     }
 
-    /**
-     * @param string $type
-     *
-     * @return SimpleFactory
-     */
+
     protected function getProxyFactory(string $type): SimpleFactory
     {
-        switch ($type[0]) {
-            case 'E':
-                $factory = $this->exceptionProxyFactory;
-                break;
-            case 'C':
-                $factory = $this->iteratorProxyFactory;
-                break;
-            case 'A':
-                $factory = $this->arrayProxyFactory;
-                break;
-            case 'O':
-            default:
-                $factory = $this->proxyFactory;
-        }
-
-        return $factory;
+        return match ($type[0]) {
+            'E' => $this->exceptionProxyFactory,
+            'C' => $this->iteratorProxyFactory,
+            'A' => $this->arrayProxyFactory,
+            default => $this->proxyFactory,
+        };
     }
 
     /**
      * @param Arg          $arg
-     * @param CompositeArg $newArg
      */
-    private function link(&$arg, &$newArg): void
+    private function link(&$arg, ApplyArg|CompositeArg &$newArg): void
     {
         $arg->linkResult($newArg->val);
         $newArg->parentArg = $arg;
@@ -365,20 +358,16 @@ class Client
 
     /**
      * @param string $str
-     *
-     * @return int
      */
-    protected function getExact($str)
+    protected function getExact($str): int
     {
         return (int) hexdec($str);
     }
 
     /**
      * @param string $str
-     *
-     * @return mixed
      */
-    private function getInexact($str)
+    private function getInexact($str): float|int|string|null
     {
         $val = null;
         sscanf($str, '%e', $val);
@@ -387,7 +376,6 @@ class Client
     }
 
     /**
-     * @param string $name
      * @param array  $st   param
      */
     public function begin(string $name, array $st): void
@@ -399,12 +387,12 @@ class Client
                 $object = $this->globalRef->get($this->getExact($st['v']));
                 $newArg = new ApplyArg($this, 'A', $this->parser->getData($st['m']), $this->parser->getData($st['p']), $object, $this->getExact($st['n']));
                 $this->link($arg, $newArg);
-                array_push($this->stack, $this->arg = $newArg);
+                $this->stack[] = $this->arg = $newArg;
                 break;
             case 'X':
                 $newArg = new CompositeArg($this, $st['t']);
                 $this->link($arg, $newArg);
-                array_push($this->stack, $this->arg = $newArg);
+                $this->stack[] = $this->arg = $newArg;
                 break;
             case 'P':
                 if ($arg->type === 'H') {
@@ -417,6 +405,7 @@ class Client
                 } else {
                     $arg->setNextIndex();
                 }
+                
                 break;
             case 'S':
                 $arg->setResult($this->parser->getData($st['v']));
@@ -431,6 +420,7 @@ class Client
                 if ($sign[0] === 'A') {
                     $val *= -1;
                 }
+                
                 $arg->setResult($val);
                 break;
             case 'D':
@@ -440,6 +430,7 @@ class Client
                 if ($st['n'] !== 'T') {
                     $arg->setVoidSignature();
                 }
+                
                 // possible bugfix, the break was missing here
                 break;
             case 'N':
@@ -453,6 +444,7 @@ class Client
                 if ($st['n'] !== 'T') {
                     $arg->setSignature($st['m']);
                 }
+                
                 break;
             case 'E':
                 $arg->setFactory($this->throwExceptionProxyFactory);
@@ -470,32 +462,25 @@ class Client
         }
     }
 
-    /**
-     * @param string $name
-     */
     public function end(string $name): void
     {
-        switch ($name[0]) {
-            case 'X':
-                $frame = array_pop($this->stack);
-                $this->arg = $frame->parentArg;
-                break;
+        if ($name[0] === 'X') {
+            $frame = array_pop($this->stack);
+            $this->arg = $frame->parentArg;
         }
     }
 
     /**
      * @throws JavaException
-     *
-     * @param mixed $arg
      */
-    protected function writeArg($arg): void
+    protected function writeArg(mixed $arg): void
     {
         if (is_string($arg)) {
             $this->protocol->writeString($arg);
         } elseif (is_object($arg)) {
             if (!$arg instanceof JavaType) {
-                $msg = "Client failed to writeArg(), IllegalArgument 'arg:".get_class($arg)."' not a Java object, using NULL instead";
-                $this->logger->error("[soluble-japha] $msg (".__METHOD__.')');
+                $msg = "Client failed to writeArg(), IllegalArgument 'arg:".$arg::class."' not a Java object, using NULL instead";
+                $this->logger->error(sprintf('[soluble-japha] %s (', $msg).__METHOD__.')');
                 //trigger_error($msg, E_USER_WARNING);
                 $this->protocol->writeObject(null);
             } else {
@@ -517,6 +502,7 @@ class Client
                         $wrote_begin = true;
                         $this->protocol->writeCompositeBegin_h();
                     }
+                    
                     $this->protocol->writePairBegin_s($key);
                     $this->writeArg($val);
                     $this->protocol->writePairEnd();
@@ -525,35 +511,34 @@ class Client
                         $wrote_begin = true;
                         $this->protocol->writeCompositeBegin_h();
                     }
+                    
                     $this->protocol->writePairBegin_n($key);
                     $this->writeArg($val);
                     $this->protocol->writePairEnd();
                 }
             }
+            
             if (!$wrote_begin) {
                 $this->protocol->writeCompositeBegin_a();
             }
+            
             $this->protocol->writeCompositeEnd();
         }
     }
 
-    /**
-     * @param array $args
-     */
     protected function writeArgs(array $args): void
     {
         $this->inArgs = true;
         foreach ($args as $arg) {
             $this->writeArg($arg);
         }
+        
         $this->inArgs = false;
     }
 
     /**
      * @param string $name java class name, i.e java.math.BigInteger
-     * @param array  $args
      *
-     * @return JavaProxy
      */
     public function createObject(string $name, array $args): JavaProxy
     {
@@ -566,23 +551,18 @@ class Client
 
     /**
      * @param string $name java class name, i.e java.math.BigInteger
-     * @param array  $args
      *
-     * @return JavaProxy
      */
     public function referenceObject(string $name, array $args): JavaProxy
     {
         $this->protocol->referenceBegin($name);
         $this->writeArgs($args);
         $this->protocol->referenceEnd();
-        $val = $this->getInternalResult();
 
-        return $val;
+        return $this->getInternalResult();
     }
 
     /**
-     * @param int    $object
-     * @param string $property
      *
      * @return mixed
      */
@@ -594,12 +574,7 @@ class Client
         return $this->getResult();
     }
 
-    /**
-     * @param int    $object
-     * @param string $property
-     * @param mixed  $arg
-     */
-    public function setProperty(int $object, string $property, $arg): void
+    public function setProperty(int $object, string $property, mixed $arg): void
     {
         $this->protocol->propertyAccessBegin($object, $property);
         $this->writeArg($arg);
@@ -622,15 +597,12 @@ class Client
         $this->writeArgs($args);
 
         $this->protocol->invokeEnd();
-        $val = $this->getResult();
 
-        return $val;
+        return $this->getResult();
     }
 
     /**
      * Write exit code.
-     *
-     * @param int $code
      */
     public function setExitCode(int $code): void
     {
@@ -653,7 +625,6 @@ class Client
     }
 
     /**
-     * @param ApplyArg $arg
      *
      * @throws Exception\JavaException
      * @throws Exception\RuntimeException
@@ -668,13 +639,14 @@ class Client
         $currentArgumentsFormat = $this->currentArgumentsFormat;
         try {
             $res = $arg->getResult(true);
-            if ((($object == null) && !function_exists($name)) || (!($object == null) && !method_exists($object, $name))) {
+            if ((($object == null) && !function_exists($name)) || ($object != null && !method_exists($object, $name))) {
                 throw new Exception\JavaException('java.lang.NoSuchMethodError', (string) $name);
             }
+            
             $res = call_user_func($ob, $res);
             if (is_object($res) && (!($res instanceof JavaType))) {
-                $msg = "Client failed to applyArg(), Object returned from '$name()' is not a Java object";
-                $this->logger->warning("[soluble-japha] $msg (".__METHOD__.')');
+                $msg = sprintf("Client failed to applyArg(), Object returned from '%s()' is not a Java object", $name);
+                $this->logger->warning(sprintf('[soluble-japha] %s (', $msg).__METHOD__.')');
                 trigger_error($msg, E_USER_WARNING);
 
                 $this->protocol->invokeBegin(0, 'makeClosure');
@@ -682,6 +654,7 @@ class Client
                 $this->protocol->invokeEnd();
                 $res = $this->getResult();
             }
+            
             $this->protocol->resultBegin();
             $this->writeArg($res);
             $this->protocol->resultEnd();
@@ -692,10 +665,11 @@ class Client
             $this->protocol->resultEnd();
         } catch (\Throwable $ex) {
             $msg = 'Unchecked exception detected in callback ('.$ex->__toString().')';
-            $this->logger->error("[soluble-japha] $msg (".__METHOD__.')');
+            $this->logger->error(sprintf('[soluble-japha] %s (', $msg).__METHOD__.')');
             trigger_error($msg, E_USER_WARNING);
-            throw new Exception\RuntimeException($msg);
+            throw new RuntimeException($msg);
         }
+        
         $this->isAsync = $isAsync;
         $this->methodCache = $methodCache;
         $this->currentArgumentsFormat = $currentArgumentsFormat;
@@ -704,36 +678,24 @@ class Client
     /**
      * Cast an object to a certain type.
      *
-     * @param JavaProxy $object
      * @param string    $type
      *
      * @return mixed
-     *
      * @throws Exception\RuntimeException
      */
     public function cast(JavaProxy $object, $type)
     {
         $code = strtoupper($type[0]);
-        switch ($code) {
-            case 'S':
-                return $this->invokeMethod(0, 'castToString', [$object]);
-            case 'B':
-                return $this->invokeMethod(0, 'castToBoolean', [$object]);
-            case 'L':
-            case 'I':
-                return $this->invokeMethod(0, 'castToExact', [$object]);
-            case 'D':
-            case 'F':
-                return $this->invokeMethod(0, 'castToInExact', [$object]);
-            case 'N':
-                return null;
-            case 'A':
-                return $this->invokeMethod(0, 'castToArray', [$object]);
-            case 'O':
-                return $object;
-            default:
-                throw new Exception\RuntimeException("Illegal type '$code' for casting");
-        }
+        return match ($code) {
+            'S' => $this->invokeMethod(0, 'castToString', [$object]),
+            'B' => $this->invokeMethod(0, 'castToBoolean', [$object]),
+            'L', 'I' => $this->invokeMethod(0, 'castToExact', [$object]),
+            'D', 'F' => $this->invokeMethod(0, 'castToInExact', [$object]),
+            'N' => null,
+            'A' => $this->invokeMethod(0, 'castToArray', [$object]),
+            'O' => $object,
+            default => throw new RuntimeException(sprintf("Illegal type '%s' for casting", $code)),
+        };
     }
 
     /**
@@ -805,10 +767,8 @@ class Client
      * t.join ();
      * ((Closeable)e).close ();
      * </code>
-     *
-     * @return Interfaces\JavaObject
      */
-    public function getContext(): Interfaces\JavaObject
+    public function getContext(): JavaObject
     {
         if ($this->cachedValues['getContext'] === null) {
             $this->cachedValues['getContext'] = $this->invokeMethod(0, 'getContext', []);
@@ -855,11 +815,9 @@ class Client
      * library has been initialized, and to store it right before the web
      * context or the entire JVM will be terminated.
      *
-     * @param array $args
      *
-     * @return Interfaces\JavaObject
      */
-    public function getSession(array $args = []): Interfaces\JavaObject
+    public function getSession(array $args = []): JavaObject
     {
         if (!isset($args[0])) {
             $args[0] = null;
@@ -882,9 +840,6 @@ class Client
         return $this->invokeMethod(0, 'getSession', $args);
     }
 
-    /**
-     * @return string
-     */
     public function getServerName(): string
     {
         if ($this->cachedValues['getServerName'] === null) {
@@ -896,8 +851,6 @@ class Client
 
     /**
      * Return client parameters.
-     *
-     * @return ArrayObject
      */
     public function getParams(): \ArrayObject
     {

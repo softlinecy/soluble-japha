@@ -59,20 +59,15 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
      */
     protected $isRedirect;
 
-    /**
-     * @var string
-     */
-    protected $httpHeadersPayload;
+    protected string $httpHeadersPayload;
 
     /**
-     * @param Protocol $protocol
      * @param string   $ssl
      * @param string   $host
      * @param int      $port
      * @param string   $java_servlet
      * @param int      $java_recv_size
      * @param int      $java_send_size
-     *
      * @throws ConnectionException
      */
     public function __construct(Protocol $protocol, $ssl, $host, $port, $java_servlet, $java_recv_size, $java_send_size)
@@ -82,12 +77,12 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
         $this->httpHeadersPayload = $this->getHttpHeadersPayload();
     }
 
-    public function createSimpleChannel()
+    public function createSimpleChannel(): void
     {
         $this->channel = new EmptyChannel($this, $this->java_recv_size, $this->java_send_size);
     }
 
-    public function createChannel()
+    protected function createChannel()
     {
         $this->createSimpleChannel();
     }
@@ -98,6 +93,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
             fflush($this->socket);
             fclose($this->socket);
         }
+        
         PjbProxyClient::unregisterAndThrowBrokenConnectionException($msg, $code);
     }
 
@@ -116,15 +112,16 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
                 $persistent
             );
             $socket = $streamSocket->getSocket();
-        } catch (\Throwable $e) {
+        } catch (\Throwable $throwable) {
             $logger = $this->protocol->getClient()->getLogger();
             $logger->critical(sprintf(
                 '[soluble-japha] %s (%s)',
-                $e->getMessage(),
+                $throwable->getMessage(),
                 __METHOD__
             ));
-            throw new ConnectionException($e->getMessage(), $e->getCode());
+            throw new ConnectionException($throwable->getMessage(), $throwable->getCode());
         }
+        
         stream_set_timeout($socket, -1);
         $this->socket = $socket;
     }
@@ -148,9 +145,11 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
             if (feof($this->socket) || $str === false) {
                 return null;
             }
+            
             $length -= strlen($str);
             $data .= $str;
         }
+        
         fgets($this->socket, 3);
 
         return $data;
@@ -159,7 +158,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
     public function fwrite(string $data): ?int
     {
         $len = dechex(strlen($data));
-        $written = fwrite($this->socket, "${len}\r\n${data}\r\n");
+        $written = fwrite($this->socket, "{$len}\r\n{$data}\r\n");
         if ($written === false) {
             return null;
         }
@@ -197,6 +196,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
             } else {
                 $str = fread($this->socket, $this->java_recv_size);
             }
+            
             $str = ($str === false || $str === null) ? '' : $str;
 
             if ($http_error === 401) {
@@ -211,21 +211,21 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
             $this->shutdownBrokenConnection('Cannot socket read response from SimpleHttpTunnelHandler');
         }
 
-        return (string) $response;
+        return $response;
     }
 
     protected function getBodyFor($compat, $data): string
     {
-        $length = dechex(2 + strlen($data));
+        $length = dechex(2 + strlen((string) $data));
 
-        return "\r\n${length}\r\n\177${compat}${data}\r\n";
+        return "\r\n{$length}\r\n\177{$compat}{$data}\r\n";
     }
 
     protected function getHttpHeadersPayload(): string
     {
         $headers = [
-            "PUT {$this->getWebApp()} HTTP/1.1",
-            "Host: {$this->host}:{$this->port}",
+            sprintf('PUT %s HTTP/1.1', $this->getWebApp()),
+            sprintf('Host: %s:%d', $this->host, $this->port),
             'Cache-Control: no-cache',
             'Pragma: no-cache',
             'Transfer-Encoding: chunked',
@@ -242,8 +242,8 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
         $client = $this->protocol->getClient();
         if (($user = $client->getParam(Client::PARAM_JAVA_AUTH_USER)) !== null) {
             $password = $client->getParam(Client::PARAM_JAVA_AUTH_PASSWORD);
-            $encoded_credentials = base64_encode("{$user}:{$password}");
-            $headers[] = "Authorization: Basic {$encoded_credentials}";
+            $encoded_credentials = base64_encode(sprintf('%s:%s', $user, $password));
+            $headers[] = 'Authorization: Basic ' . $encoded_credentials;
         }
 
         return implode("\r\n", $headers);
@@ -265,6 +265,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
                 )
             );
         }
+        
         $flushed = @fflush($this->socket);
         if ($flushed === false) {
             $this->shutdownBrokenConnection(
@@ -275,7 +276,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
             );
         }
 
-        return (int) $count;
+        return $count;
     }
 
     protected function parseHeaders(): void
@@ -286,12 +287,14 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
         if ($res === false) {
             $this->shutdownBrokenConnection('Cannot parse headers, socket cannot be read.');
         }
+        
         $line = trim($res);
         $ar = explode(' ', $line);
         $code = ((int) $ar[1]);
         if ($code !== 200) {
             $this->headers['http_error'] = $code;
         }
+        
         while ($str = trim(fgets($this->socket, $this->java_recv_size))) {
             if ($str[0] === 'X') {
                 if (!strncasecmp('X_JAVABRIDGE_REDIRECT', $str, 21)) {
@@ -309,9 +312,11 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
                     if (isset($ar[1])) {
                         $p = explode('=', $ar[1]);
                     }
+                    
                     if (isset($p)) {
                         $path = $p[1];
                     }
+                    
                     $this->doSetCookie($cookie[0], $cookie[1], $path);
                 }
             } elseif ($str[0] === 'C') {
@@ -329,10 +334,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
         }
     }
 
-    /**
-     * @return ChunkedSocketChannel
-     */
-    protected function getSimpleChannel()
+    protected function getSimpleChannel(): ChunkedSocketChannel
     {
         return new ChunkedSocketChannel($this->socket, $this->host, $this->java_recv_size, $this->java_send_size);
     }
@@ -340,20 +342,17 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
     public function redirect(): void
     {
         $this->isRedirect = isset($this->headers['redirect']);
-        if ($this->isRedirect) {
-            $channelName = $this->headers['redirect'];
-        } else {
-            $channelName = null;
-        }
+        $channelName = $this->isRedirect ? $this->headers['redirect'] : null;
+        
         $context = $this->headers['context'];
-        $len = strlen($context);
+        $len = strlen((string) $context);
         $len0 = chr(0xFF);
         $len1 = chr($len & 0xFF);
         $len >>= 8;
         $len2 = chr($len & 0xFF);
         if ($this->isRedirect) {
             $this->protocol->setSocketHandler(new SocketHandler($this->protocol, $this->getChannel($channelName)));
-            $this->protocol->write("\177${len0}${len1}${len2}${context}");
+            $this->protocol->write(sprintf('%s%s%s%s', $len0, $len1, $len2, $context));
             $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
             $this->close();
             $this->protocol->handler = $this->protocol->getSocketHandler();
@@ -362,6 +361,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
                 if ($written === null) {
                     $this->protocol->handler->shutdownBrokenConnection('Broken local connection handle');
                 }
+                
                 $this->protocol->client->sendBuffer = null;
                 $read = $this->protocol->handler->read(1);
             }

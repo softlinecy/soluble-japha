@@ -42,16 +42,10 @@ class ParserTag
     /**
      * @var int
      */
-    public $n;
+    public $n = 0;
 
     /**
      * @var array
      */
-    public $strings;
-
-    public function __construct()
-    {
-        $this->strings = [];
-        $this->n = 0;
-    }
+    public $strings = [];
 }

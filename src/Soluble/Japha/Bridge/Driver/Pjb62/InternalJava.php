@@ -37,13 +37,10 @@
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
-use Soluble\Japha\Interfaces;
+use Soluble\Japha\Interfaces\JavaObject;
 
-class InternalJava extends Java implements Interfaces\JavaObject
+class InternalJava extends Java implements JavaObject
 {
-    /**
-     * @param JavaProxy $proxy
-     */
     public function __construct(JavaProxy $proxy)
     {
         $this->__delegate = $proxy;

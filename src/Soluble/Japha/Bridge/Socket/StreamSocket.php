@@ -10,6 +10,7 @@ use Soluble\Japha\Bridge\Exception\InvalidArgumentException;
 class StreamSocket implements StreamSocketInterface
 {
     public const TRANSPORT_SSL = 'ssl';
+    
     public const TRANSPORT_TCP = 'tcp';
 
     public const REGISTERED_TRANSPORTS = [
@@ -34,10 +35,11 @@ class StreamSocket implements StreamSocketInterface
      */
     protected $socket;
 
-    protected $persistent = false;
-    protected $address;
+    
+    
     protected $connectTimeout;
-    protected $streamContext;
+
+    
     protected $transport;
 
     /**
@@ -49,29 +51,27 @@ class StreamSocket implements StreamSocketInterface
      */
     public function __construct(
         string $transport,
-        string $address,
+        protected string $address,
         float $connectTimeout = null,
-        array $streamContext = self::DEFAULT_CONTEXT,
-        bool $persistent = false
+        protected array $streamContext = self::DEFAULT_CONTEXT,
+        protected bool $persistent = false
     ) {
         $this->setTransport($transport);
-        $this->address = $address;
         $this->setConnectTimeout($connectTimeout);
-        $this->streamContext = $streamContext;
-        $this->persistent = $persistent;
         $this->createSocket();
     }
 
     protected function setConnectTimeout(float $timeout = null): void
     {
         if ($timeout === null) {
-            list($host) = explode(':', $this->address);
-            if (array_key_exists("HOST_$host", self::DEFAULT_CONNECT_TIMEOUTS)) {
-                $timeout = self::DEFAULT_CONNECT_TIMEOUTS["HOST_$host"];
+            [$host] = explode(':', (string) $this->address);
+            if (array_key_exists('HOST_' . $host, self::DEFAULT_CONNECT_TIMEOUTS)) {
+                $timeout = self::DEFAULT_CONNECT_TIMEOUTS['HOST_' . $host];
             } else {
                 $timeout = self::DEFAULT_CONNECT_TIMEOUTS['DEFAULT'];
             }
         }
+        
         $this->connectTimeout = $timeout;
     }
 
@@ -87,6 +87,7 @@ class StreamSocket implements StreamSocketInterface
                 implode(',', array_keys(self::REGISTERED_TRANSPORTS))
             ));
         }
+        
         $this->transport = $transport;
     }
 
@@ -115,8 +116,6 @@ class StreamSocket implements StreamSocketInterface
 
     /**
      * Whether the connection is persistent or not.
-     *
-     * @return bool
      */
     public function isPersistent(): bool
     {

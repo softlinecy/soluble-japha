@@ -44,17 +44,12 @@ class NativeParser implements ParserInterface
     /**
      * @var resource
      */
-    protected $parser;
-
-    /**
-     * @var Client
-     */
-    protected $client;
+    protected \XMLParser $parser;
 
     /**
      * @var int
      */
-    protected $level;
+    protected $level = 0;
 
     /**
      * @var bool
@@ -71,27 +66,21 @@ class NativeParser implements ParserInterface
      */
     protected $java_recv_size;
 
-    /**
-     * @param Client $client
-     */
-    public function __construct(Client $client)
+    public function __construct(protected Client $client)
     {
-        $this->client = $client;
         $this->parser = xml_parser_create();
         xml_parser_set_option($this->parser, XML_OPTION_CASE_FOLDING, 0);
         xml_set_object($this->parser, $this);
         xml_set_element_handler($this->parser, 'begin', 'end');
         xml_parse($this->parser, '<F>');
-        $this->level = 0;
-        $this->java_recv_size = $client->java_recv_size;
+        $this->java_recv_size = $this->client->java_recv_size;
     }
 
     /**
      * @param resource $parser
-     * @param string   $name
      * @param mixed    $param
      */
-    protected function begin($parser, $name, $param): void
+    protected function begin($parser, string $name, array $param): void
     {
         $this->event = true;
         switch ($name) {
@@ -100,14 +89,14 @@ class NativeParser implements ParserInterface
                 ++$this->level;
                 break;
         }
+        
         $this->client->begin($name, $param);
     }
 
     /**
      * @param resource $parser
-     * @param string   $name
      */
-    public function end($parser, $name): void
+    public function end($parser, string $name): void
     {
         $this->client->end($name);
         switch ($name) {
@@ -117,11 +106,7 @@ class NativeParser implements ParserInterface
         }
     }
 
-    /**
-     * @param string $str
-     *
-     * @return string
-     */
+    
     public function getData(string $str): string
     {
         return base64_decode($str);

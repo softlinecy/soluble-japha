@@ -12,9 +12,10 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Adapter;
 
+use Soluble\Japha\Bridge\Adapter;
+use Soluble\Japha\Interfaces\JavaObject;
 use DateTimeZone;
 use Soluble\Japha\Bridge;
-use Soluble\Japha\Interfaces;
 use Soluble\Japha\Util\TimeZone;
 use Soluble\Japha\Util\Exception\UnsupportedTzException;
 
@@ -23,18 +24,13 @@ class System
 
     protected TimeZone $timeZone;
 
-    /**
-     * @param Bridge\Adapter $ba
-     */
-    public function __construct(protected Bridge\Adapter $ba)
+    public function __construct(protected Adapter $ba)
     {
         $this->timeZone = new TimeZone($ba);
     }
 
     /**
      * Get php DateTime helper object.
-     *
-     * @return TimeZone
      */
     public function getTimeZone(): TimeZone
     {
@@ -43,8 +39,6 @@ class System
 
     /**
      * Return system default timezone id.
-     *
-     * @return string
      */
     public function getTimeZoneId(): string
     {
@@ -57,7 +51,7 @@ class System
      *@throws Bridge\Exception\JavaException
      * @throws UnsupportedTzException
      */
-    public function setTimeZoneId(string|Interfaces\JavaObject|DateTimeZone $timezone): void
+    public function setTimeZoneId(string|JavaObject|DateTimeZone $timezone): void
     {
         $this->timeZone->setDefault($timezone);
     }

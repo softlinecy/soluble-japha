@@ -39,10 +39,7 @@ namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
 class ProxyFactory extends SimpleFactory
 {
-    /**
-     * @return JavaProxy
-     */
-    public static function create($result, ?string $signature)
+    public static function create($result, ?string $signature): JavaProxy
     {
         return new JavaProxy($result, $signature);
     }
@@ -56,7 +53,7 @@ class ProxyFactory extends SimpleFactory
     {
         $proxy = static::create($result, $signature);
         if ($wrap) {
-            $proxy = $this->createInternal($proxy);
+            return $this->createInternal($proxy);
         }
 
         return $proxy;

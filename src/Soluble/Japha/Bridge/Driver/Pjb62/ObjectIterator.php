@@ -62,9 +62,6 @@ class ObjectIterator implements Iterator
         reset($this->var);
     }
 
-    /**
-     * @return bool
-     */
     public function valid(): bool
     {
         return $this->current() !== false;

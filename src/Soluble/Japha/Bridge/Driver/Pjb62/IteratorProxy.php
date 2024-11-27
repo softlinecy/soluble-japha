@@ -50,9 +50,6 @@ namespace Soluble\Japha\Bridge\Driver\Pjb62;
  */
 class IteratorProxy extends JavaProxy implements \IteratorAggregate
 {
-    /**
-     * @return ObjectIterator
-     */
     public function getIterator(): ObjectIterator
     {
         return new ObjectIterator($this);

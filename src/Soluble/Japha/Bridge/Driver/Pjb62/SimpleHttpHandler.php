@@ -50,7 +50,7 @@ class SimpleHttpHandler extends SocketHandler
     /**
      * @var array
      */
-    public $cookies;
+    public $cookies = [];
 
     /**
      * @var string
@@ -58,44 +58,15 @@ class SimpleHttpHandler extends SocketHandler
     public $context;
 
     /**
-     * @var string
-     */
-    public $ssl;
-
-    /**
-     * @var int
-     */
-    public $port;
-
-    /**
-     * @var string
-     */
-    public $host;
-
-    /**
      * @var array
      */
-    protected $cachedValues = [];
-
-    /**
-     * @var string
-     */
-    protected $java_servlet;
-
-    /**
-     * @var int
-     */
-    protected $java_recv_size;
-
-    /**
-     * @var int
-     */
-    protected $java_send_size;
+    protected $cachedValues = [
+        'getContext' => null
+    ];
 
     /**
      * @throws Exception\IllegalStateException on channel creation error
      *
-     * @param Protocol $protocol
      * @param string   $ssl
      * @param string   $host
      * @param int      $port
@@ -103,21 +74,9 @@ class SimpleHttpHandler extends SocketHandler
      * @param int      $java_recv_size
      * @param int      $java_send_size
      */
-    public function __construct(Protocol $protocol, $ssl, $host, $port, $java_servlet, $java_recv_size, $java_send_size)
+    public function __construct(Protocol $protocol, public $ssl, public $host, public $port, protected $java_servlet, protected $java_recv_size, protected $java_send_size)
     {
-        $this->cookies = [];
         $this->protocol = $protocol;
-        $this->ssl = $ssl;
-        $this->host = $host;
-        $this->port = $port;
-        $this->java_servlet = $java_servlet;
-
-        $this->java_send_size = $java_send_size;
-        $this->java_recv_size = $java_recv_size;
-
-        $this->cachedValues = [
-            'getContext' => null
-        ];
         $this->createChannel();
     }
 
@@ -136,7 +95,8 @@ class SimpleHttpHandler extends SocketHandler
         $len2 = chr($len & 0xFF);
         $this->channel = $this->getChannel($channelName);
         $this->protocol->setSocketHandler(new SocketHandler($this->protocol, $this->channel));
-        $this->protocol->write("\177${len0}${len1}${len2}${context}");
+        $this->protocol->write(sprintf('%s%s%s%s', $len0, $len1, $len2, $context));
+        
         $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
         $this->protocol->handler = $this->protocol->getSocketHandler();
 
@@ -145,6 +105,7 @@ class SimpleHttpHandler extends SocketHandler
             if ($ret === null) {
                 $this->protocol->handler->shutdownBrokenConnection('Broken local connection handle');
             }
+            
             $this->protocol->client->sendBuffer = null;
             $this->protocol->handler->read(1);
         }
@@ -173,20 +134,17 @@ class SimpleHttpHandler extends SocketHandler
     public function getWebAppInternal()
     {
         $context = $this->protocol->webContext;
-        if (isset($context)) {
-            return $context;
-        }
 
-        return ($this->java_servlet == 'User' &&
+        return $context ?? (($this->java_servlet == 'User' &&
                 array_key_exists('PHP_SELF', $_SERVER) &&
-                array_key_exists('HTTP_HOST', $_SERVER)) ? $_SERVER['PHP_SELF'].'javabridge' : null;
+                array_key_exists('HTTP_HOST', $_SERVER)) ? $_SERVER['PHP_SELF'].'javabridge' : null);
     }
 
     public function getWebApp(): string
     {
         $context = $this->getWebAppInternal();
         if (null === $context) {
-            $context = $this->java_servlet;
+            return $this->java_servlet;
         }
 
         return $context;
@@ -200,14 +158,15 @@ class SimpleHttpHandler extends SocketHandler
         return $this->protocol->getSocketHandler()->write($data);
     }
 
-    public function doSetCookie($key, $val, $path)
+    public function doSetCookie($key, $val, $path): void
     {
-        $path = trim($path);
+        $path = trim((string) $path);
         $webapp = $this->getWebAppInternal();
         if (!$webapp) {
             $path = '/';
         }
-        setcookie($key, $val, 0, $path);
+        
+        setcookie($key, (string) $val, ['expires' => 0, 'path' => $path]);
     }
 
     /**
@@ -221,7 +180,6 @@ class SimpleHttpHandler extends SocketHandler
     /**
      * @param string $channelName generally the tcp port on which to connect
      *
-     * @return SocketChannelP
      *
      * @throws Exception\ConnectException
      */
@@ -237,15 +195,16 @@ class SimpleHttpHandler extends SocketHandler
                 $persistent
             );
             $socket = $streamSocket->getSocket();
-        } catch (\Throwable $e) {
+        } catch (\Throwable $throwable) {
             $logger = $this->protocol->getClient()->getLogger();
             $logger->critical(sprintf(
                 '[soluble-japha] %s (%s)',
-                $e->getMessage(),
+                $throwable->getMessage(),
                 __METHOD__
             ));
-            throw new ConnectionException($e->getMessage(), $e->getCode());
+            throw new ConnectionException($throwable->getMessage(), $throwable->getCode());
         }
+        
         stream_set_timeout($socket, -1);
 
         return new SocketChannelP($socket, $this->host, $this->java_recv_size, $this->java_send_size);

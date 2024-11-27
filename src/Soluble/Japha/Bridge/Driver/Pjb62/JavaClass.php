@@ -39,6 +39,7 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Interfaces\JavaObject;
 use Soluble\Japha\Interfaces;
 
 /**
@@ -65,7 +66,7 @@ class JavaClass extends Java implements Interfaces\JavaClass
     /**
      * @return Interfaces\JavaClass Java('java.lang.Class')
      */
-    public function getClass(): Interfaces\JavaObject
+    public function getClass(): JavaObject
     {
         return $this->__delegate->getClass();
     }

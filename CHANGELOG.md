@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0 (2024-11-27)
+- Laravel 11+ support
+- PHP 8.2+ support
+- PHPUnit v10+
+
+## 6.0.0 (2023-12-14)
+- Laravel 10 support
+-
+## 5.0.1 (2023-12-14)
+- Laravel 10 support
+
+## 5.0.0 (2023-12-14)
+- Laravel 10 support
+
+## 4.0.0 (2023-09-19)
+- PHP 8.1 support
+
 ## 3.0.0 (2021-04-25)
 
 ### New

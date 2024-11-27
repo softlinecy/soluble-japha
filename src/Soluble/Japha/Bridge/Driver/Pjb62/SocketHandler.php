@@ -107,11 +107,11 @@ class SocketHandler
      */
     public function shutdownBrokenConnection(string $msg = '', int $code = null): void
     {
-        $msg = $msg ?? 'Broken connection: Unkown error, please see back end log for detail';
+        $msg ??= 'Broken connection: Unkown error, please see back end log for detail';
 
         // Log error
         $client = $this->protocol->getClient();
-        $client->getLogger()->critical("[soluble-japha] $msg\"  (".__METHOD__.')');
+        $client->getLogger()->critical(sprintf('[soluble-japha] %s"  (', $msg).__METHOD__.')');
 
         $this->channel->shutdownBrokenConnection();
         PjbProxyClient::unregisterAndThrowBrokenConnectionException($msg, $code);

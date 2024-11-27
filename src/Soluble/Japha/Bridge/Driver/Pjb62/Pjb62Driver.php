@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Exception\ConnectionException;
+use Soluble\Japha\Bridge\Exception\InvalidArgumentException;
+use Soluble\Japha\Interfaces\JavaClass;
+use Soluble\Japha\Bridge\Exception\InvalidUsageException;
+use Soluble\Japha\Interfaces\JavaObject;
+use Soluble\Japha\Bridge\Exception\RuntimeException;
+use Soluble\Japha\Bridge\Exception\UnexpectedException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Soluble\Japha\Bridge\Driver\AbstractDriver;
@@ -25,10 +32,7 @@ class Pjb62Driver extends AbstractDriver
      */
     protected $pjbProxyClient;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected ?LoggerInterface $logger;
 
     /**
      * Constructor.
@@ -49,15 +53,13 @@ class Pjb62Driver extends AbstractDriver
      *
      * </code>
      *
-     * @param array           $options
-     * @param LoggerInterface $logger
      *
      * @throws Exception\InvalidArgumentException
      * @throws Exception\ConnectionException
      */
     public function __construct(array $options, LoggerInterface $logger = null)
     {
-        if ($logger === null) {
+        if (!$logger instanceof LoggerInterface) {
             $logger = new NullLogger();
         }
 
@@ -65,14 +67,14 @@ class Pjb62Driver extends AbstractDriver
 
         try {
             $this->pjbProxyClient = PjbProxyClient::getInstance($options, $this->logger);
-        } catch (Exception\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             $address = $options['servlet_address'];
-            $msg = "Cannot connect to php-java-bridge server on '$address', server didn't respond.";
-            $this->logger->critical("[soluble-japha] $msg (".$e->getMessage().')');
+            $msg = sprintf("Cannot connect to php-java-bridge server on '%s', server didn't respond.", $address);
+            $this->logger->critical(sprintf('[soluble-japha] %s (', $msg).$e->getMessage().')');
             throw $e;
-        } catch (Exception\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             $msg = 'Invalid arguments, cannot initiate connection to java-bridge.';
-            $this->logger->error("[soluble-japha] $msg (".$e->getMessage().')');
+            $this->logger->error(sprintf('[soluble-japha] %s (', $msg).$e->getMessage().')');
             throw $e;
         }
     }
@@ -97,11 +99,11 @@ class Pjb62Driver extends AbstractDriver
      *
      * @throws BrokenConnectionException
      */
-    public function getJavaClass(string $class_name): Interfaces\JavaClass
+    public function getJavaClass(string $class_name): JavaClass
     {
         try {
             $class = $this->pjbProxyClient->getJavaClass($class_name);
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -114,11 +116,11 @@ class Pjb62Driver extends AbstractDriver
      *
      * @throws BrokenConnectionException
      */
-    public function instanciate(string $class_name, ...$args): Interfaces\JavaObject
+    public function instanciate(string $class_name, ...$args): JavaObject
     {
         try {
             $java = new Java($class_name, ...$args);
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -138,7 +140,7 @@ class Pjb62Driver extends AbstractDriver
      */
     public function setFileEncoding(string $encoding): void
     {
-        $this->invoke(null, 'setFileEncoding', [$encoding]);
+        $this->invoke('setFileEncoding', null, [$encoding]);
     }
 
     /**
@@ -148,9 +150,9 @@ class Pjb62Driver extends AbstractDriver
      *
      * @return Interfaces\JavaObject Java("io.soluble.pjb.bridge.Options")
      */
-    public function getConnectionOptions(): Interfaces\JavaObject
+    public function getConnectionOptions(): JavaObject
     {
-        return $this->invoke(null, 'getOptions');
+        return $this->invoke('getOptions', null);
     }
 
     /**
@@ -158,11 +160,11 @@ class Pjb62Driver extends AbstractDriver
      *
      * @throws BrokenConnectionException
      */
-    public function invoke(Interfaces\JavaType $javaObject = null, string $method, array $args = [])
+    public function invoke(string $method, Interfaces\JavaType $javaObject = null, array $args = [])
     {
         try {
-            return $this->pjbProxyClient->invokeMethod($javaObject, $method, $args);
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+            return $this->pjbProxyClient->invokeMethod($method, $javaObject, $args);
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -172,14 +174,12 @@ class Pjb62Driver extends AbstractDriver
      * Returns the jsr223 script context handle.
      *
      * @throws BrokenConnectionException
-     *
-     * @return Interfaces\JavaObject
      */
-    public function getContext(): Interfaces\JavaObject
+    public function getContext(): JavaObject
     {
         try {
             return $this->pjbProxyClient::getClient()->getContext();
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -198,17 +198,15 @@ class Pjb62Driver extends AbstractDriver
      * }
      * </code>
      *
-     * @param array $args
      *
      * @throws BrokenConnectionException
      *
-     * @return Interfaces\JavaObject
      */
-    public function getJavaSession(array $args = []): Interfaces\JavaObject
+    public function getJavaSession(array $args = []): JavaObject
     {
         try {
             return $this->pjbProxyClient::getClient()->getSession();
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -217,17 +215,15 @@ class Pjb62Driver extends AbstractDriver
     /**
      * Inspect the class internals.
      *
-     * @param Interfaces\JavaObject $javaObject
      *
      * @throws BrokenConnectionException
      *
-     * @return string
      */
-    public function inspect(Interfaces\JavaObject $javaObject): string
+    public function inspect(JavaObject $javaObject): string
     {
         try {
             $inspect = $this->pjbProxyClient->inspect($javaObject);
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -240,11 +236,11 @@ class Pjb62Driver extends AbstractDriver
      *
      * @throws BrokenConnectionException
      */
-    public function isInstanceOf(Interfaces\JavaObject $javaObject, $className): bool
+    public function isInstanceOf(JavaObject $javaObject, $className): bool
     {
         try {
             return $this->pjbProxyClient->isInstanceOf($javaObject, $className);
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -255,11 +251,11 @@ class Pjb62Driver extends AbstractDriver
      *
      * @throws BrokenConnectionException
      */
-    public function values(Interfaces\JavaObject $javaObject)
+    public function values(JavaObject $javaObject)
     {
         try {
             return $this->pjbProxyClient->getValues($javaObject);
-        } catch (Pjb62BrokenConnectionException | Exception\InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -268,8 +264,6 @@ class Pjb62Driver extends AbstractDriver
     /**
      * Return java bridge header or empty string if nothing.
      *
-     * @param string $name
-     * @param array  $array
      *
      * @return string header value or empty string if not exists
      */
@@ -278,7 +272,8 @@ class Pjb62Driver extends AbstractDriver
         if (array_key_exists($name, $array)) {
             return $array[$name];
         }
-        $name = "HTTP_$name";
+        
+        $name = 'HTTP_' . $name;
         if (array_key_exists($name, $array)) {
             return $array[$name];
         }
@@ -290,7 +285,6 @@ class Pjb62Driver extends AbstractDriver
      * Cast internal objects to a new type.
      *
      * @param Interfaces\JavaObject|JavaType|mixed $javaObject
-     * @param string                               $cast_type
      *
      * @return mixed
      */
@@ -302,24 +296,16 @@ class Pjb62Driver extends AbstractDriver
 
         // mixed (string | int | bool)
         $first_char = strtoupper($cast_type[0]);
-        switch ($first_char) {
-            case 'S':
-                return (string) $javaObject;
-            case 'B':
-                return (bool) $javaObject;
-            case 'L':
-            case 'I':
-                return (int) $javaObject;
-            case 'D':
-            case 'F':
-                return (float) $javaObject;
-            case 'N':
-                return null;
-            case 'A':
-                return (array) $javaObject;
-            case 'O':
-                return (object) $javaObject;
-        }
+        return match ($first_char) {
+            'S' => (string) $javaObject,
+            'B' => (bool) $javaObject,
+            'L', 'I' => (int) $javaObject,
+            'D', 'F' => (float) $javaObject,
+            'N' => null,
+            'A' => (array) $javaObject,
+            'O' => (object) $javaObject,
+            default => null,
+        };
     }
 
     /**
@@ -327,7 +313,7 @@ class Pjb62Driver extends AbstractDriver
      *
      * @param Interfaces\JavaObject|int|float $javaObject
      */
-    public function cast($javaObject, string $cast_type)
+    public function cast($javaObject, string $cast_type): string|bool|int|float|\stdClass|array|null
     {
         /* @todo see how can it be possible to clean up to new structure
             const CAST_TYPE_STRING  = 'string';
@@ -340,26 +326,16 @@ class Pjb62Driver extends AbstractDriver
             const CAST_TYPE_NULL -> null
          */
         $first_char = strtoupper(substr($cast_type, 0, 1));
-        switch ($first_char) {
-            case 'S':
-                return (string) $javaObject;
-            case 'B':
-                return (bool) $javaObject;
-            case 'L':
-            case 'I':
-                return (int) $javaObject;
-            case 'D':
-            case 'F':
-                return (float) $javaObject;
-            case 'N':
-                return null;
-            case 'A':
-                return (array) $javaObject;
-            case 'O':
-                return (object) $javaObject;
-            default:
-                throw new Exception\RuntimeException("Unsupported cast_type parameter: $cast_type");
-        }
+        return match ($first_char) {
+            'S' => (string) $javaObject,
+            'B' => (bool) $javaObject,
+            'L', 'I' => (int) $javaObject,
+            'D', 'F' => (float) $javaObject,
+            'N' => null,
+            'A' => (array) $javaObject,
+            'O' => (object) $javaObject,
+            default => throw new RuntimeException('Unsupported cast_type parameter: ' . $cast_type),
+        };
     }
 
     /**
@@ -368,19 +344,17 @@ class Pjb62Driver extends AbstractDriver
      * @throws Exception\UnexpectedException
      * @throws BrokenConnectionException
      *
-     * @param Interfaces\JavaObject $javaObject
      *
-     * @return string
      */
-    public function getClassName(Interfaces\JavaObject $javaObject): string
+    public function getClassName(JavaObject $javaObject): string
     {
         $inspect = $this->inspect($javaObject);
 
         // [class java.sql.DriverManager:
         $matches = [];
         preg_match('/^\[class (.+)\:/', $inspect, $matches);
-        if (!isset($matches[1]) || $matches[1] == '') {
-            throw new Exception\UnexpectedException(__METHOD__.' Cannot determine class name');
+        if (!isset($matches[1]) || $matches[1] === '') {
+            throw new UnexpectedException(__METHOD__.' Cannot determine class name');
         }
 
         return $matches[1];

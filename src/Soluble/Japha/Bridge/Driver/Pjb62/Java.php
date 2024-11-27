@@ -42,6 +42,9 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\IllegalArgumentException;
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\IllegalStateException;
+
 class Java extends AbstractJava
 {
     /**
@@ -62,7 +65,7 @@ class Java extends AbstractJava
 
         $client = $this->__client;
 
-        $sig = "&{$this->__signature}@{$name}";
+        $sig = sprintf('&%s@%s', $this->__signature, $name);
         $len = count($args);
         $args2 = [];
         for ($i = 0; $i < $len; ++$i) {
@@ -90,10 +93,11 @@ class Java extends AbstractJava
                 case 'object':
                     if ($val instanceof JavaType) {
                         $args2[] = $val->get__java();
-                        $sig .= "@o{$val->get__signature()}";
+                        $sig .= '@o' . $val->get__signature();
                     } else {
                         $sig = '~INVALID';
                     }
+                    
                     break;
                 case 'resource':
                     $args2[] = $val;
@@ -108,7 +112,7 @@ class Java extends AbstractJava
                     $sig .= '@u';
                     break;
                 default:
-                    throw new Exception\IllegalArgumentException($val);
+                    throw new IllegalArgumentException($val);
             }
         }
 
@@ -118,10 +122,12 @@ class Java extends AbstractJava
             //if (strlen($client->sendBuffer) >= JAVA_SEND_SIZE) {
             if (strlen($client->sendBuffer) >= $this->__client->java_send_size) {
                 if ($client->protocol->handler->write($client->sendBuffer) <= 0) {
-                    throw new Exception\IllegalStateException('Connection out of sync,check backend log for details.');
+                    throw new IllegalStateException('Connection out of sync,check backend log for details.');
                 }
+                
                 $client->sendBuffer = null;
             }
+            
             $client->preparedToSendBuffer = vsprintf($cacheEntry->fmt, $args2);
             $this->__java = ++$client->asyncCtx;
 
@@ -143,6 +149,7 @@ class Java extends AbstractJava
         if (!isset($this->__client)) {
             return;
         }
+        
         $client = $this->__client;
         $preparedToSendBuffer = &$client->preparedToSendBuffer;
         if ($preparedToSendBuffer &&
@@ -151,25 +158,21 @@ class Java extends AbstractJava
             $client->sendBuffer .= $preparedToSendBuffer;
             $preparedToSendBuffer = null;
             --$client->asyncCtx;
-        } else {
-            if (!isset($this->__delegate)) {
-                $client->unref($this->__java);
-            }
+        } elseif (!isset($this->__delegate)) {
+            $client->unref($this->__java);
         }
     }
 
     /**
      * Call a method on this JavaObject.
      *
-     * @param string $name
-     * @param array  $arguments
      *
      * @return mixed|null
      */
     public function __call(string $name, array $arguments)
     {
         $client = $this->__client;
-        $sig = "@{$this->__signature}@$name";
+        $sig = sprintf('@%s@%s', $this->__signature, $name);
         $len = count($arguments);
         $args2 = [$this->__java];
         for ($i = 0; $i < $len; ++$i) {
@@ -196,10 +199,11 @@ class Java extends AbstractJava
                 case 'object':
                     if ($val instanceof JavaType) {
                         $args2[] = $val->get__java();
-                        $sig .= "@o{$val->get__signature()}";
+                        $sig .= '@o' . $val->get__signature();
                     } else {
                         $sig = '~INVALID';
                     }
+                    
                     break;
                 case 'resource':
                     $args2[] = $val;
@@ -214,37 +218,35 @@ class Java extends AbstractJava
                     $sig .= '@u';
                     break;
                 default:
-                    throw new Exception\IllegalArgumentException($val);
+                    throw new IllegalArgumentException($val);
             }
         }
+        
         if (array_key_exists($sig, $client->methodCache)) {
             $cacheEntry = &$client->methodCache[$sig];
             $client->sendBuffer .= $client->preparedToSendBuffer;
             if (strlen($client->sendBuffer) >= $this->__client->java_send_size) {
                 if ($client->protocol->handler->write($client->sendBuffer) <= 0) {
-                    throw new Exception\IllegalStateException('Out of sync. Check backend log for details.');
+                    throw new IllegalStateException('Out of sync. Check backend log for details.');
                 }
+                
                 $client->sendBuffer = null;
             }
+            
             $client->preparedToSendBuffer = vsprintf($cacheEntry->fmt, $args2);
             if ($cacheEntry->resultVoid) {
                 ++$client->cancelProxyCreationTag;
 
                 return null;
-            } else {
-                $result = clone $client->cachedJavaPrototype;
-                $result->__factory = $cacheEntry->factory;
-                $result->__java = ++$client->asyncCtx;
-                $result->__signature = $cacheEntry->signature;
-                $result->__cancelProxyCreationTag = ++$client->cancelProxyCreationTag;
-
-                return $result;
             }
-        } else {
-            $client->currentCacheKey = $sig;
-            $retval = parent::__call($name, $arguments);
-
-            return $retval;
+            $result = clone $client->cachedJavaPrototype;
+            $result->__factory = $cacheEntry->factory;
+            $result->__java = ++$client->asyncCtx;
+            $result->__signature = $cacheEntry->signature;
+            $result->__cancelProxyCreationTag = ++$client->cancelProxyCreationTag;
+            return $result;
         }
+        $client->currentCacheKey = $sig;
+        return parent::__call($name, $arguments);
     }
 }

@@ -44,10 +44,6 @@ interface ParserInterface
 {
     public function parse(): void;
 
-    /**
-     * @param string $str
-     *
-     * @return string
-     */
+    
     public function getData(string $str): string;
 }

@@ -16,8 +16,6 @@ interface ConnectionInterface
 {
     /**
      * Return internal client (driver specific).
-     *
-     * @return ClientInterface
      */
     public function getClient(): ClientInterface;
 }

@@ -21,15 +21,11 @@ interface JavaExceptionInterface extends \Throwable
      * For example:
      * - message = Invoke failed: [[o:String]]->anInvalidMethod. java.lang.NoSuchMethodException: anInvalidMethod()
      * - cause = java.lang.NoSuchMethodException: anInvalidMethod()
-     *
-     * @return string
      */
     public function getCause(): string;
 
     /**
      * Return Java stack trace as string.
-     *
-     * @return string
      */
     public function getStackTrace(): string;
 

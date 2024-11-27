@@ -39,9 +39,6 @@ namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
 class JavaProxyProxy extends Java
 {
-    /**
-     * @param Client $client
-     */
     public function __construct(Client $client)
     {
         $this->__client = $client;

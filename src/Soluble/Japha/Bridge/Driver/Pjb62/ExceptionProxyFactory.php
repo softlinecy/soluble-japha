@@ -40,6 +40,8 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\InternalException;
+
 class ExceptionProxyFactory extends SimpleFactory
 {
     public function __construct(Client $client)
@@ -55,11 +57,11 @@ class ExceptionProxyFactory extends SimpleFactory
     /**
      * @return JavaProxy|ExceptionProxy|Exception\InternalException
      */
-    public function getProxy($result, ?string $signature, $exception, ?bool $wrap)
+    public function getProxy($result, ?string $signature, $exception, ?bool $wrap): InternalException|ExceptionProxy
     {
         $proxy = static::create($result, $signature);
         if ($wrap) {
-            $proxy = new Exception\InternalException($proxy, $exception);
+            return new InternalException($proxy, $exception);
         }
 
         return $proxy;

@@ -1,14 +1,16 @@
 # soluble-japha
 
-[![PHP Version](https://img.shields.io/badge/php-5.6+-ff69b4.svg)](https://packagist.org/packages/soluble/japha)
-[![PHP Version](https://img.shields.io/badge/php-7.4+-ff69b4.svg)](https://packagist.org/packages/soluble/japha)
-[![PHP Version](https://img.shields.io/badge/php-8.0+-ff69b4.svg)](https://packagist.org/packages/soluble/japha)
+[![PHP Version](https://img.shields.io/badge/php-5.6+-ff69b4.svg)](https://github.com/softlinecy/soluble-japha)
+[![PHP Version](https://img.shields.io/badge/php-7.4+-ff69b4.svg)](https://github.com/softlinecy/soluble-japha)
+[![PHP Version](https://img.shields.io/badge/php-8.0+-ff69b4.svg)](https://github.com/softlinecy/soluble-japha)
+[![PHP Version](https://img.shields.io/badge/php-8.1+-ff69b4.svg)](https://github.com/softlinecy/soluble-japha)
+[![PHP Version](https://img.shields.io/badge/php-8.2+-ff69b4.svg)](https://github.com/softlinecy/soluble-japha)
 [![Build Status](https://travis-ci.org/belgattitude/soluble-japha.svg?branch=master)](https://travis-ci.org/belgattitude/soluble-japha)
 [![codecov](https://codecov.io/gh/belgattitude/soluble-japha/branch/master/graph/badge.svg)](https://codecov.io/gh/belgattitude/soluble-japha)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/belgattitude/soluble-japha/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/belgattitude/soluble-japha/?branch=master)
-[![Latest Stable Version](https://poser.pugx.org/soluble/japha/v/stable.svg)](https://packagist.org/packages/soluble/japha)
-[![Total Downloads](https://poser.pugx.org/soluble/japha/downloads.png)](https://packagist.org/packages/soluble/japha)
-[![License](https://poser.pugx.org/soluble/japha/license.png)](https://packagist.org/packages/soluble/japha)
+[![Latest Stable Version](https://poser.pugx.org/soluble/japha/v/stable.svg)](https://github.com/softlinecy/soluble-japha)
+[![Total Downloads](https://poser.pugx.org/soluble/japha/downloads.png)](https://github.com/softlinecy/soluble-japha)
+[![License](https://poser.pugx.org/soluble/japha/license.png)](https://github.com/softlinecy/soluble-japha)
 
 In short **soluble-japha** allows to write Java code in PHP and interact with the JVM ecosystem.
 
@@ -119,6 +121,8 @@ to take advantage of
 
 ## Requirements
 
+- Version `^7.0` requires PHP 8.2 ![PHP Version](http://img.shields.io/badge/php-8.2+-ff69b4.svg)
+- Version `^4.0` requires PHP 8.1 ![PHP Version](http://img.shields.io/badge/php-8.1+-ff69b4.svg)
 - Version `^3.0` requires PHP 8.0 ![PHP Version](http://img.shields.io/badge/php-8.0+-ff69b4.svg)
 - Version `^2.0` requires PHP 7.1 ![PHP Version](http://img.shields.io/badge/php-7.1+-ff69b4.svg)
 

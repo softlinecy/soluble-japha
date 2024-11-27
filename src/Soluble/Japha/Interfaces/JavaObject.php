@@ -34,7 +34,6 @@ interface JavaObject extends JavaType, \ArrayAccess, \IteratorAggregate
      * @throws \Soluble\Japha\Bridge\Exception\JavaException             generic java exception
      * @throws \Soluble\Japha\Bridge\Exception\NoSuchFieldException      when field does not exists
      *
-     * @param string $key
      *
      * @return mixed
      */
@@ -48,11 +47,8 @@ interface JavaObject extends JavaType, \ArrayAccess, \IteratorAggregate
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
      * @throws \Soluble\Japha\Bridge\Exception\JavaException             generic java exception
      * @throws \Soluble\Japha\Bridge\Exception\NoSuchFieldException      when field does not exists
-     *
-     * @param string $key
-     * @param mixed  $val
      */
-    public function __set(string $key, $val);
+    public function __set(string $key, mixed $val);
 
     /**
      * Call a java method on the JavaObject (delegated to Java object).
@@ -65,8 +61,6 @@ interface JavaObject extends JavaType, \ArrayAccess, \IteratorAggregate
      * @throws \Soluble\Japha\Bridge\Exception\JavaException             generic java exception
      * @throws \Soluble\Japha\Bridge\Exception\NoSuchMethodException     when method does not exists
      *
-     * @param string $name
-     * @param array  $arguments
      *
      * @return mixed
      */
@@ -77,8 +71,6 @@ interface JavaObject extends JavaType, \ArrayAccess, \IteratorAggregate
      * to get the JavaObject as string.
      *
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
-     *
-     * @return string
      */
     public function __toString(): string;
 }

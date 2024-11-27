@@ -46,32 +46,58 @@ class SimpleParser implements ParserInterface
      * @var int
      */
     public $SLEN = 256;
+    
+    /**
+     * @var \Soluble\Japha\Bridge\Driver\Pjb62\Client
+     */
     public $handler;
+    
+    /**
+     * @var \Soluble\Japha\Bridge\Driver\Pjb62\ParserTag[]
+     */
     public $tag;
+    
     public $buf;
+    
     public $len;
+    
+    /**
+     * @var string
+     */
     public $s;
+    
     public $type;
 
     public $BEGIN = 0;
+    
     public $KEY = 1;
+    
     public $VAL = 2;
+    
     public $ENTITY = 3;
+    
     public $VOJD = 5;
+    
     public $END = 6;
+    
     public $level = 0;
+    
     public $eor = 0;
+    
     public $in_dquote;
+    
     public $eot = false;
+    
     public $pos = 0;
+    
     public $c = 0;
+    
     public $i = 0;
+    
     public $i0 = 0;
+    
     public $e;
 
-    /**
-     * @param Client $client
-     */
     public function __construct(Client $client)
     {
         $this->handler = $client;
@@ -97,9 +123,10 @@ class SimpleParser implements ParserInterface
     protected function APPEND($c)
     {
         if ($this->i >= $this->len - 1) {
-            $this->s = str_repeat($this->s, 2);
+            $this->s = str_repeat((string) $this->s, 2);
             $this->len *= 2;
         }
+        
         $this->s[$this->i++] = $c;
     }
 
@@ -114,10 +141,11 @@ class SimpleParser implements ParserInterface
         for ($i = 0; $i < $n; ++$i) {
             $ar[$pt[$i]->getString()] = $st[$i]->getString();
         }
+        
         $this->handler->begin($name, $ar);
     }
 
-    private function CALL_END()
+    private function CALL_END(): void
     {
         $t = &$this->tag[0]->strings[0];
         $name = $t->string[$t->off];
@@ -132,6 +160,7 @@ class SimpleParser implements ParserInterface
         if (!isset($str[$n])) {
             $str[$n] = new ParserString();
         }
+        
         $str[$n]->string = &$this->s;
         $str[$n]->off = $this->i0;
         $str[$n]->length = $this->i - $this->i0;
@@ -146,21 +175,25 @@ class SimpleParser implements ParserInterface
         while ($this->eor == 0) {
             if ($this->c >= $this->pos) {
                 $this->buf = $this->handler->read($java_recv_size);
-                if (null === $this->buf || strlen($this->buf) == 0) {
+                if (null === $this->buf || strlen((string) $this->buf) == 0) {
                     $this->handler->protocol->handler->shutdownBrokenConnection('protocol error. Check the back end log for OutOfMemoryErrors.');
                 }
-                $this->pos = strlen($this->buf);
+                
+                $this->pos = strlen((string) $this->buf);
                 if ($this->pos == 0) {
                     break;
                 }
+                
                 $this->c = 0;
             }
+            
             switch (($ch = $this->buf[$this->c])) {
                 case '<':
                     if ($this->in_dquote) {
                         $this->APPEND($ch);
                         break;
                     }
+                    
                     ++$this->level;
                     $this->type = $this->BEGIN;
                     break;
@@ -173,16 +206,19 @@ class SimpleParser implements ParserInterface
                         $this->APPEND($ch);
                         break;
                     }
+                    
                     if ($this->type == $this->BEGIN) {
                         $this->PUSH($this->type);
                         $this->type = $this->KEY;
                     }
+                    
                     break;
                 case '=':
                     if ($this->in_dquote) {
                         $this->APPEND($ch);
                         break;
                     }
+                    
                     $this->PUSH($this->type);
                     $this->type = $this->VAL;
                     break;
@@ -191,10 +227,12 @@ class SimpleParser implements ParserInterface
                         $this->APPEND($ch);
                         break;
                     }
+                    
                     if ($this->type == $this->BEGIN) {
                         $this->type = $this->END;
                         --$this->level;
                     }
+                    
                     --$this->level;
                     $this->eot = true;
                     break;
@@ -203,6 +241,7 @@ class SimpleParser implements ParserInterface
                         $this->APPEND($ch);
                         break;
                     }
+                    
                     if ($this->type == $this->END) {
                         $this->PUSH($this->BEGIN);
                         $this->CALL_END();
@@ -210,14 +249,20 @@ class SimpleParser implements ParserInterface
                         if ($this->type == $this->VAL) {
                             $this->PUSH($this->type);
                         }
+                        
                         $this->CALL_BEGIN();
                     }
-                    $this->tag[0]->n = $this->tag[1]->n = $this->tag[2]->n = 0;
-                    $this->i0 = $this->i = 0;
+
+                    $this->tag[0]->n = 0;
+                    $this->tag[1]->n = 0;
+                    $this->tag[2]->n = 0;
+                    $this->i0 = 0;
+                    $this->i = 0;
                     $this->type = $this->VOJD;
                     if ($this->level == 0) {
                         $this->eor = 1;
                     }
+                    
                     break;
                 case ';':
                     if ($this->type == $this->ENTITY) {
@@ -231,7 +276,7 @@ class SimpleParser implements ParserInterface
                                 $this->i = $this->e + 1;
                                 break;
                             case 'a':
-                                $this->s[$this->e] = ($this->s[$this->e + 2] == 'm' ? '&' : '\'');
+                                $this->s[$this->e] = ($this->s[$this->e + 2] == 'm' ? '&' : "'");
                                 $this->i = $this->e + 1;
                                 break;
                             case 'q':
@@ -241,10 +286,12 @@ class SimpleParser implements ParserInterface
                             default:
                                 $this->APPEND($ch);
                         }
+                        
                         $this->type = $this->VAL;
                     } else {
                         $this->APPEND($ch);
                     }
+                    
                     break;
                 case '&':
                     $this->type = $this->ENTITY;
@@ -257,12 +304,15 @@ class SimpleParser implements ParserInterface
                         $this->PUSH($this->type);
                         $this->type = $this->KEY;
                     }
+                    
                     break;
                 default:
                     $this->APPEND($ch);
             }
+            
             ++$this->c;
         }
+        
         $this->RESET();
     }
 

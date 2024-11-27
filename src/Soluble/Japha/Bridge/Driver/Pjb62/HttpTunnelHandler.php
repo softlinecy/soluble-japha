@@ -55,9 +55,8 @@ class HttpTunnelHandler extends SimpleHttpTunnelHandler
             }
 
             return $data;
-        } else {
-            return parent::fread($size);
         }
+        return parent::fread($size);
     }
 
     /**
@@ -73,10 +72,11 @@ class HttpTunnelHandler extends SimpleHttpTunnelHandler
                 );
             }
         }
+        
         return parent::fwrite($data);
     }
 
-    public function close(): void
+    protected function close(): void
     {
         if ($this->hasContentLength) {
             fwrite($this->socket, "0\r\n\r\n");

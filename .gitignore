@@ -8,7 +8,6 @@ composer.lock
 .idea
 .php_cs.cache
 infection-log.txt
-/phpunit*.xml
 /vendor
 /nbproject
 /build
@@ -19,3 +18,5 @@ infection-log.txt
 .travis/*.pid
 /deploy_doc.sh
 /.phpunit.result.cache
+/tmp
+.phpunit.cache

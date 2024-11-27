@@ -26,8 +26,6 @@ class Cookie
      * Serialize PHP's $_COOKIE values into a valid HTTP COOKIE string.
      *
      * @param array<string, string> $cookies if null
-     *
-     * @return string|null
      */
     public static function getCookiesHeaderLine(array $cookies = null): ?string
     {
@@ -47,12 +45,9 @@ class Cookie
     /**
      * Escapes $cookieValue taking into account its type to serialize it as a valid cookie value.
      *
-     * @param string $cookieName
-     * @param mixed  $cookieValue
      *
-     * @return string
      */
-    private static function serializePHPCookies(string $cookieName, $cookieValue): string
+    private static function serializePHPCookies(string $cookieName, mixed $cookieValue): string
     {
         $cookieParts = [];
         $urlEncodedCookieName = urlencode($cookieName);
@@ -62,28 +57,29 @@ class Cookie
             case 'double':
             case 'string':
                 $urlEncodedCookieValue = urlencode((string) $cookieValue);
-                $cookieParts[] = "$urlEncodedCookieName=$urlEncodedCookieValue";
+                $cookieParts[] = sprintf('%s=%s', $urlEncodedCookieName, $urlEncodedCookieValue);
                 break;
 
             case 'array':
                 foreach ($cookieValue as $cookieValueKey => $cookieValueValue) {
-                    $cookieParts[] = self::serializePHPCookies($cookieName."[$cookieValueKey]", $cookieValueValue);
+                    $cookieParts[] = self::serializePHPCookies($cookieName.sprintf('[%s]', $cookieValueKey), $cookieValueValue);
                 }
+
                 break;
 
             case 'NULL':
-                $cookieParts[] = "$urlEncodedCookieName=";
+                $cookieParts[] = $urlEncodedCookieName . '=';
                 break;
 
             case 'boolean':
-                $cookieParts[] = "$urlEncodedCookieName=".((bool) $cookieValue ? '1' : '0');
+                $cookieParts[] = $urlEncodedCookieName . '='.((bool) $cookieValue ? '1' : '0');
                 break;
 
             // It's a security risk to serialize an object and send it as a cookie
             case 'object':
                 // Intentional fallthrough
             default:
-                $cookieParts[] = "$urlEncodedCookieName=".self::UNSUPPORTED_TYPE_VALUE;
+                $cookieParts[] = $urlEncodedCookieName . '='.self::UNSUPPORTED_TYPE_VALUE;
                 break;
         }
 

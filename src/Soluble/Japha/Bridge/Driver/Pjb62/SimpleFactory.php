@@ -46,9 +46,6 @@ class SimpleFactory
      */
     public $client;
 
-    /**
-     * @param Client $client
-     */
     public function __construct(Client $client)
     {
         $this->client = $client;
@@ -62,9 +59,6 @@ class SimpleFactory
         return $result;
     }
 
-    /**
-     * @param JavaException $result
-     */
     public function checkResult(JavaException $result): void
     {
     }

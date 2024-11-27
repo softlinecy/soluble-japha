@@ -42,19 +42,14 @@ class GlobalRef
     /**
      * @var array
      */
-    protected $map;
-
-    public function __construct()
-    {
-        $this->map = [];
-    }
+    protected $map = [];
 
     /**
      * @param JavaType|object|null $object
      *
      * @return int|JavaType|object
      */
-    public function add($object)
+    public function add($object): int
     {
         if (null === $object) {
             return 0;

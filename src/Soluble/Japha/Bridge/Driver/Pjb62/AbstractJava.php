@@ -42,11 +42,12 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Interfaces\JavaObject;
 use Exception;
 use Soluble\Japha\Interfaces;
 use Traversable;
 
-abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaType, Interfaces\JavaObject
+abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaType, JavaObject
 {
     /**
      * @var Client|string|null
@@ -57,17 +58,21 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      * @var JavaType&JavaProxy
      */
     public $__delegate;
+
     protected $__serialID;
+
     public $__factory;
 
     /**
      * @var int
      */
     public $__java;
+
     /**
      * @var string|null
      */
     public $__signature;
+
     public $__cancelProxyCreationTag;
 
     protected function __createDelegate(): void
@@ -78,11 +83,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
         $this->__signature = $proxy->__signature;
     }
 
-    /**
-     * @param string $type
-     *
-     * @return mixed
-     */
+
     public function __cast(string $type) : mixed
     {
         if (!isset($this->__delegate)) {
@@ -100,6 +101,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
+
         $this->__delegate->__sleep();
 
         return ['__delegate'];
@@ -110,6 +112,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
+
         $this->__delegate->__wakeup();
         $this->__java = $this->__delegate->get__java();
         $this->__client = $this->__delegate->get__signature();
@@ -122,7 +125,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      *
      * @throws \Exception Depending on ThrowExceptionProxy
      *
-     * @param string $key
      *
      * @return mixed
      */
@@ -142,7 +144,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      *
      * @throws \Exception Depending on ThrowExceptionProxy
      *
-     * @param string $key
      * @param mixed  $val
      */
     public function __set(string $key, $val): void
@@ -150,6 +151,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
         if (!isset($this->__delegate)) {
             $this->__createDelegate();
         }
+
         $this->__delegate->__set($key, $val);
     }
 
@@ -158,8 +160,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      * to access the Java object method (and not the PHP
      * remote proxied object).
      *
-     * @param string $name
-     * @param array  $arguments
      *
      * @return mixed
      *@throws \Exception Depending on ThrowExceptionProxy
@@ -177,7 +177,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      * @param  string|int  $offset
      * @param  mixed|null  ...$args
      *
-     * @return bool
      * @throws Exception
      */
     public function offsetExists($offset, ...$args): bool
@@ -200,7 +199,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
     /**
      * @param  mixed|null  ...$args  arguments
      *
-     * @return Traversable
      * @throws Exception
      */
     public function getIterator(...$args) : Traversable
@@ -220,7 +218,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      * @param  string|int  $offset
      * @param  mixed|null  ...$args  additional arguments
      *
-     * @return mixed
      * @throws Exception
      */
     public function offsetGet($offset, ...$args): mixed
@@ -231,6 +228,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
         if (empty($args)) {
             return $this->__delegate->offsetGet($offset);
         }
+
         array_unshift($args, $offset);
 
         return $this->__call('offsetGet', $args);
@@ -238,10 +236,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
 
     /**
      * @param  string|int  $offset
-     * @param  mixed  $value
      * @param  mixed|null  ...$args  additional arguments
-     *
-     * @return void
      * @throws Exception
      */
     public function offsetSet($offset, mixed $value, ...$args): void
@@ -259,10 +254,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
     }
 
     /**
-     * @param  mixed  $offset
      * @param  mixed|null  ...$args  additional arguments
-     *
-     * @return void
      * @throws Exception
      */
     public function offsetUnset(mixed $offset, ...$args) : void
@@ -273,14 +265,12 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
         if (empty($args)) {
             $this->__delegate->offsetUnset($offset);
         }
+
         array_unshift($args, $offset);
 
         $this->__call('offsetUnset', $args);
     }
 
-    /**
-     * @return int
-     */
     public function get__java(): int
     {
         return $this->__java;
@@ -288,17 +278,12 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
 
     /**
      * Return java object id.
-     *
-     * @return int
      */
     public function __getJavaInternalObjectId(): int
     {
         return $this->__java;
     }
 
-    /**
-     * @return string|null
-     */
     public function get__signature(): ?string
     {
         return $this->__signature;
@@ -307,8 +292,6 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
     /**
      * The PHP magic method __toString() cannot be applied
      * on the PHP object but has to be delegated to the Java one.
-     *
-     * @return string
      */
     public function __toString(): string
     {
@@ -325,7 +308,7 @@ abstract class AbstractJava implements \IteratorAggregate, \ArrayAccess, JavaTyp
      *
      * @return Interfaces\JavaObject Java('java.lang.Object')
      */
-    public function getClass(): Interfaces\JavaObject
+    public function getClass(): JavaObject
     {
         return $this->__delegate->getClass();
     }

@@ -12,7 +12,9 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Db;
 
-use Soluble\Japha\Bridge;
+use Soluble\Japha\Bridge\Adapter;
+use Soluble\Japha\Interfaces\JavaObject;
+use Soluble\Japha\Bridge\Exception\InvalidArgumentException;
 use Soluble\Japha\Bridge\Exception;
 use Soluble\Japha\Interfaces;
 
@@ -23,17 +25,8 @@ class DriverManager
      */
     protected $driverManager;
 
-    /**
-     * @var Bridge\Adapter
-     */
-    protected $ba;
-
-    /**
-     * @param Bridge\Adapter $ba
-     */
-    public function __construct(Bridge\Adapter $ba)
+    public function __construct(protected Adapter $ba)
     {
-        $this->ba = $ba;
     }
 
     /**
@@ -45,32 +38,20 @@ class DriverManager
      * @throws Exception\InvalidArgumentException
      * @throws Exception\BrokenConnectionException
      *
-     * @param string $dsn
-     * @param string $driverClass
      *
      * @return Interfaces\JavaObject Java('java.sql.Connection')
      */
-    public function createConnection(string $dsn, string $driverClass = 'com.mysql.jdbc.Driver'): Interfaces\JavaObject
+    public function createConnection(string $dsn, string $driverClass = 'com.mysql.jdbc.Driver'): JavaObject
     {
-        if (!is_string($dsn) || trim($dsn) == '') {
+        if (trim($dsn) === '') {
             $message = 'DSN param must be a valid (on-empty) string';
-            throw new Exception\InvalidArgumentException(__METHOD__.' '.$message);
+            throw new InvalidArgumentException(__METHOD__.' '.$message);
         }
 
         $class = $this->ba->javaClass('java.lang.Class');
-        try {
-            $class->forName($driverClass);
-        } catch (Exception\JavaException $e) {
-            throw $e;
-        }
+        $class->forName($driverClass);
 
-        try {
-            $conn = $this->getDriverManager()->getConnection($dsn);
-        } catch (Exception\JavaExceptionInterface $e) {
-            throw $e;
-        }
-
-        return $conn;
+        return $this->getDriverManager()->getConnection($dsn);
     }
 
     /**
@@ -78,7 +59,7 @@ class DriverManager
      *
      * @return Interfaces\JavaObject Java('java.sql.DriverManager')
      */
-    public function getDriverManager(): Interfaces\JavaObject
+    public function getDriverManager(): JavaObject
     {
         if ($this->driverManager === null) {
             $this->driverManager = $this->ba->javaClass('java.sql.DriverManager');
@@ -96,8 +77,6 @@ class DriverManager
      * @param string $user     username to connect
      * @param string $password password to connect
      * @param array  $options  extra options as an associative array
-     *
-     * @return string
      */
     public static function getJdbcDsn(string $driver, string $db, string $host, string $user, string $password, array $options = []): string
     {
@@ -105,11 +84,12 @@ class DriverManager
         if (count($options) > 0) {
             $tmp = [];
             foreach ($options as $key => $value) {
-                $tmp[] = urlencode($key).'='.urlencode($value);
+                $tmp[] = urlencode($key).'='.urlencode((string) $value);
             }
+            
             $extras = '&'.implode('&', $tmp);
         }
 
-        return "jdbc:$driver://$host/$db?user=$user&password=$password".$extras;
+        return sprintf('jdbc:%s://%s/%s?user=%s&password=%s', $driver, $host, $db, $user, $password).$extras;
     }
 }

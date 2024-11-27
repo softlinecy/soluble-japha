@@ -51,14 +51,21 @@ use Soluble\Japha\Interfaces\JavaObject;
 class JavaException extends Exception implements JavaType
 {
     public $__serialID;
+
     public $__java;
 
     /**
      * @var Client
      */
     public $__client;
+
     public $__delegate;
+
     public $__signature;
+
+    /**
+     * @var 'T'
+     */
     public $__hasDeclaredExceptions;
 
     /**
@@ -121,17 +128,11 @@ class JavaException extends Exception implements JavaType
         return $this->__delegate->__call($name, $arguments);
     }
 
-    /**
-     * @return string
-     */
     public function __toString(): string
     {
         return (string) $this->__delegate->__toExceptionString($this->getTraceAsString());
     }
 
-    /**
-     * @return int
-     */
     public function get__java(): int
     {
         return $this->__java;
@@ -139,17 +140,12 @@ class JavaException extends Exception implements JavaType
 
     /**
      * Return java object id.
-     *
-     * @return int
      */
     public function __getJavaInternalObjectId(): int
     {
         return $this->__java;
     }
 
-    /**
-     * @return string|null
-     */
     public function get__signature(): ?string
     {
         return $this->__signature;

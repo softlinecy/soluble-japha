@@ -39,22 +39,17 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\JavaException;
 use Soluble\Japha\Bridge\Driver\Pjb62\Exception\InternalException;
 use Soluble\Japha\Bridge\Driver\Pjb62\Utils\HelperFunctions;
 
 class ThrowExceptionProxyFactory extends ExceptionProxyFactory
 {
-    /**
-     * @param Client $client
-     */
     public function __construct(Client $client)
     {
         parent::__construct($client);
     }
 
-    /**
-     * @return Exception\InternalException
-     */
     public function getProxy($result, ?string $signature, $exception, ?bool $wrap): InternalException
     {
         $proxy = static::create($result, $signature);
@@ -63,19 +58,16 @@ class ThrowExceptionProxyFactory extends ExceptionProxyFactory
     }
 
     /**
-     * @param Exception\JavaException $result
-     *
      * @throws Exception\JavaException
      */
-    public function checkResult(Exception\JavaException $result): void
+    public function checkResult(JavaException $result): void
     {
         if (PjbProxyClient::getInstance()->getOption('java_prefer_values') || ($result->__hasDeclaredExceptions === 'T')) {
             throw $result;
-        } else {
-            $msg = 'Unchecked exception detected: '.HelperFunctions::java_truncate($result->__toString());
-            // Log error
-            $this->client->getLogger()->critical("[soluble-japha] $msg (".__METHOD__.')');
-            trigger_error($msg, E_USER_WARNING);
         }
+        $msg = 'Unchecked exception detected: '.HelperFunctions::java_truncate($result->__toString());
+        // Log error
+        $this->client->getLogger()->critical(sprintf('[soluble-japha] %s (', $msg).__METHOD__.')');
+        trigger_error($msg, E_USER_WARNING);
     }
 }

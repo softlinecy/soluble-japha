@@ -42,8 +42,6 @@ class ArrayProxyFactory extends ProxyFactory
     /**
      * @param mixed  $result
      * @param string $signature
-     *
-     * @return ArrayProxy
      */
     public static function create($result, ?string $signature): ArrayProxy
     {

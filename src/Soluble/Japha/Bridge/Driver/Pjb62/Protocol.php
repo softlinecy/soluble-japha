@@ -79,58 +79,27 @@ class Protocol
     /**
      * @var string
      */
-    protected $java_hosts;
-
-    /**
-     * @var string
-     */
-    protected $java_servlet;
-
-    /**
-     * @var int
-     */
-    public $java_recv_size;
-
-    /**
-     * @var int
-     */
-    public $java_send_size;
-
-    /**
-     * @var string
-     */
     protected $internal_encoding;
 
     /**
-     * @param Client $client
      * @param string $java_hosts
      * @param string $java_servlet
      * @param int    $java_recv_size
      * @param int    $java_send_size
      */
-    public function __construct(Client $client, $java_hosts, $java_servlet, $java_recv_size, $java_send_size)
+    public function __construct(Client $client, protected $java_hosts, protected $java_servlet, public $java_recv_size, public $java_send_size)
     {
         $this->client = $client;
         $this->internal_encoding = $client->getParam(Client::PARAM_JAVA_INTERNAL_ENCODING);
-        $this->java_hosts = $java_hosts;
-        $this->java_servlet = $java_servlet;
-        $this->java_recv_size = $java_recv_size;
-        $this->java_send_size = $java_send_size;
-        $this->setHost($java_hosts);
+        $this->setHost($this->java_hosts);
         $this->handler = $this->createHandler();
     }
 
-    /**
-     * @return Client
-     */
     public function getClient(): Client
     {
         return $this->client;
     }
 
-    /**
-     * @return string
-     */
     public function getOverrideHosts(): string
     {
         if (array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_ENV)) {
@@ -160,9 +129,6 @@ class Protocol
         return $this->socketHandler;
     }
 
-    /**
-     * @param string $java_hosts
-     */
     public function setHost(string $java_hosts): void
     {
         $hosts = explode(';', $java_hosts);
@@ -171,26 +137,23 @@ class Protocol
         while (count($host) < 3) {
             array_unshift($host, '');
         }
-        if (substr($host[1], 0, 2) === '//') {
+        
+        if (str_starts_with($host[1], '//')) {
             $host[1] = substr($host[1], 2);
         }
+        
         $this->host = $host;
     }
 
-    /**
-     * @return array
-     */
     public function getHost(): array
     {
         return $this->host;
     }
 
     /**
-     * @return HttpTunnelHandler|SimpleHttpHandler
-     *
      * @throws Exception\IllegalStateException
      */
-    public function createHttpHandler()
+    public function createHttpHandler(): SimpleHttpHandler|HttpTunnelHandler
     {
         $overrideHosts = $this->getOverrideHosts();
         $ssl = '';
@@ -200,43 +163,44 @@ class Protocol
                 if ($s[0] === 's') {
                     $ssl = 'ssl://';
                 }
+                
                 $s = substr($s, 2);
             }
+            
             $webCtx = strpos($s, '//');
-            if ($webCtx) {
-                $host = substr($s, 0, $webCtx);
-            } else {
-                $host = $s;
-            }
+            $host = $webCtx ? substr($s, 0, $webCtx) : $s;
+            
             $idx = strpos($host, ':');
             if ($idx) {
-                if ($webCtx) {
-                    $port = substr($host, $idx + 1, $webCtx);
-                } else {
-                    $port = substr($host, $idx + 1);
-                }
+                $port = $webCtx ? substr($host, $idx + 1, $webCtx) : substr($host, $idx + 1);
+
                 $host = substr($host, 0, $idx);
             } else {
                 $port = '8080';
             }
+            
             if ($webCtx) {
                 $webCtx = substr($s, $webCtx + 1);
             }
+            
             if (!is_string($webCtx)) {
                 throw new ConfigurationException(
                     'Cannot get a valid context'
                 );
             }
+            
             $this->webContext = $webCtx;
         } else {
             $hostVec = $this->getHost();
             if ($ssl = $hostVec[0]) {
                 $ssl .= '://';
             }
+            
             $host = $hostVec[1];
             $port = $hostVec[2];
         }
-        $this->serverName = "${ssl}${host}:$port";
+        
+        $this->serverName = sprintf('%s%s:%s', $ssl, $host, $port);
 
         if ((array_key_exists('X_JAVABRIDGE_REDIRECT', $_SERVER)) ||
                 (array_key_exists('HTTP_X_JAVABRIDGE_REDIRECT', $_SERVER))) {
@@ -258,8 +222,9 @@ class Protocol
             $host = '127.0.0.1';
             $port = $channelName;
         } else {
-            list($host, $port) = explode(':', $channelName);
+            [$host, $port] = explode(':', $channelName);
         }
+        
         $timeout = in_array($host, ['localhost', '127.0.0.1']) ? 5 : 20;
         $peer = pfsockopen($host, (int) $port, $errno, $errstr, $timeout);
         if (!\is_resource($peer)) {
@@ -277,8 +242,8 @@ class Protocol
         stream_set_timeout($peer, -1);
         $handler = new SocketHandler($this, new SocketChannelP($peer, $host, $this->java_recv_size, $this->java_send_size));
         $compatibility = PjbProxyClient::getInstance()->getCompatibilityOption($this->client);
-        $this->write("\177$compatibility");
-        $this->serverName = "$host:$port";
+        $this->write('' . $compatibility);
+        $this->serverName = sprintf('%s:%s', $host, $port);
 
         return $handler;
     }
@@ -297,9 +262,8 @@ class Protocol
                 //((function_exists('java_get_default_channel') && ($defaultChannel = java_get_default_channel())) ||
                 ($defaultChannel = $this->java_get_simple_channel())) {
             return $this->createSimpleHandler($defaultChannel);
-        } else {
-            return $this->createHttpHandler();
         }
+        return $this->createHttpHandler();
     }
 
     public function redirect(): void
@@ -307,9 +271,6 @@ class Protocol
         $this->handler->redirect();
     }
 
-    /**
-     * @return string
-     */
     public function read(int $size): string
     {
         return $this->handler->read($size);
@@ -343,10 +304,7 @@ class Protocol
         $this->client->handleRequests();
     }
 
-    /**
-     * @param string $data
-     */
-    public function write($data): void
+    public function write(string $data): void
     {
         $this->client->sendBuffer .= $data;
     }
@@ -412,7 +370,7 @@ class Protocol
         $this->client->sendBuffer .= $this->client->preparedToSendBuffer;
         $this->client->preparedToSendBuffer = null;
         $this->write(sprintf('<G p="1" v="%x" m="%s">', $object, $method));
-        $this->client->currentArgumentsFormat = "<G p=\"2\" v=\"%x\" m=\"${method}\">";
+        $this->client->currentArgumentsFormat = sprintf('<G p="2" v="%%x" m="%s">', $method);
     }
 
     public function propertyAccessEnd(): void
@@ -433,7 +391,7 @@ class Protocol
         $this->client->sendBuffer .= $this->client->preparedToSendBuffer;
         $this->client->preparedToSendBuffer = null;
         $this->write(sprintf('<Y p="1" v="%x" m="%s">', $object_id, $method));
-        $this->client->currentArgumentsFormat = "<Y p=\"2\" v=\"%x\" m=\"${method}\">";
+        $this->client->currentArgumentsFormat = sprintf('<Y p="2" v="%%x" m="%s">', $method);
     }
 
     public function invokeEnd(): void
@@ -492,10 +450,7 @@ class Protocol
         }
     }
 
-    /**
-     * @param mixed $l
-     */
-    public function writeULong($l): void
+    public function writeULong(mixed $l): void
     {
         $format = '<L v="%x" p="O"/>';
         $this->client->currentArgumentsFormat .= $format;
@@ -582,9 +537,6 @@ class Protocol
         $this->write(sprintf('<U v="%x"/>', $object));
     }
 
-    /**
-     * @return string
-     */
     public function getServerName(): string
     {
         return $this->serverName;

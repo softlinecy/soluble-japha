@@ -12,67 +12,73 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver;
 
+use Soluble\Japha\Interfaces\JavaObject;
+use Soluble\Japha\Interfaces\JavaClass;
+use Soluble\Japha\Interfaces\JavaType;
 use Soluble\Japha\Interfaces;
 
 abstract class AbstractDriver implements DriverInterface
 {
     const CAST_TYPE_STRING = 'string';
+    
     const CAST_TYPE_BOOLEAN = 'boolean';
+    
     const CAST_TYPE_INTEGER = 'integer';
+    
     const CAST_TYPE_FLOAT = 'float';
+    
     const CAST_TYPE_ARRAY = 'array';
+    
     const CAST_TYPE_NULL = 'null';
+    
     const CAST_TYPE_OBJECT = 'object';
 
     /**
      * {@inheritdoc}
      */
-    abstract public function instanciate(string $class_name, ...$args): Interfaces\JavaObject;
+    abstract public function instanciate(string $class_name, ...$args): JavaObject;
 
     /**
      * Fast retrieval of JavaObject values (one roundtrip),
      * use it on Java array structures (ArrayList...)
      * to avoid the need of iterations on the PHP side.
      *
-     * @param Interfaces\JavaObject $javaObject
      *
      * @return mixed
      */
-    abstract public function values(Interfaces\JavaObject $javaObject);
+    abstract public function values(JavaObject $javaObject);
 
     /**
      * Inspect object.
      *
-     * @param Interfaces\JavaObject $javaObject
      *
-     * @return string
      */
-    abstract public function inspect(Interfaces\JavaObject $javaObject): string;
+    abstract public function inspect(JavaObject $javaObject): string;
 
     /**
      * {@inheritdoc}
      */
-    abstract public function isInstanceOf(Interfaces\JavaObject $javaObject, $className): bool;
+    abstract public function isInstanceOf(JavaObject $javaObject, $className): bool;
 
     /**
      * {@inheritdoc}
      */
-    abstract public function getClassName(Interfaces\JavaObject $javaObject): string;
+    abstract public function getClassName(JavaObject $javaObject): string;
 
     /**
      * {@inheritdoc}
      */
-    abstract public function getJavaClass(string $class_name): Interfaces\JavaClass;
+    abstract public function getJavaClass(string $class_name): JavaClass;
 
     /**
      * {@inheritdoc}
      */
-    abstract public function invoke(Interfaces\JavaType $javaObject = null, string $method, array $args = []);
+    abstract public function invoke(string $method, JavaType $javaObject = null, array $args = []);
 
     /**
      * {@inheritdoc}
      */
-    abstract public function getContext(): Interfaces\JavaObject;
+    abstract public function getContext(): JavaObject;
 
     /**
      * Return java servlet session.
@@ -87,11 +93,9 @@ abstract class AbstractDriver implements DriverInterface
      * }
      * </code>
      *
-     * @param array $args
      *
-     * @return Interfaces\JavaObject
      */
-    abstract public function getJavaSession(array $args = []): Interfaces\JavaObject;
+    abstract public function getJavaSession(array $args = []): JavaObject;
 
     /**
      * Cast a java object into a php type.
@@ -100,7 +104,6 @@ abstract class AbstractDriver implements DriverInterface
      * @throws \Soluble\Japha\Bridge\Exception\RuntimeException
      *
      * @param Interfaces\JavaObject|int|float|array|bool $javaObject
-     * @param string                                     $cast_type
      *
      * @return mixed
      */
@@ -109,9 +112,9 @@ abstract class AbstractDriver implements DriverInterface
     /**
      * {@inheritdoc}
      */
-    public function isNull(Interfaces\JavaObject $javaObject = null): bool
+    public function isNull(JavaObject $javaObject = null): bool
     {
-        if ($javaObject === null) {
+        if (!$javaObject instanceof JavaObject) {
             return true;
         }
 
@@ -121,7 +124,7 @@ abstract class AbstractDriver implements DriverInterface
     /**
      * {@inheritdoc}
      */
-    public function isTrue(Interfaces\JavaObject $javaObject): bool
+    public function isTrue(JavaObject $javaObject): bool
     {
         $values = $this->values($javaObject);
         if (is_int($values) || is_bool($values)) {

@@ -1,5 +1,6 @@
 {
     "name": "softlinecy/japha",
+    "version": "6.0.0",
     "description": "Soluble PHP Java bridge integration",
     "license": "MIT",
     "keywords": [
@@ -13,6 +14,10 @@
         {
             "name": "Sébastien Vanvelthem",
             "homepage": "https://github.com/belgattitude"
+        },
+        {
+            "name": "Marios Vasileiou",
+            "homepage": "https://github.com/mariosvasiliou"
         }
     ],
     "autoload": {
@@ -22,25 +27,30 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "SolubleTest\\Japha\\": "test/src/SolubleTest/Japha"
+            "SolubleTest\\Japha\\": "tests/src/SolubleTest/Japha"
         },
-        "files": ["test/SolubleTestFactories.php"]
+        "files": [
+            "tests/SolubleTestFactories.php"
+        ]
     },
     "require": {
         "ext-xml": "*",
-        "php": "^8.1",
-        "psr/log": "^2.0"
+        "php": "^8.2",
+        "psr/log": "^2.0.0 || ^3.0.0"
     },
     "require-dev" : {
-        "phpunit/phpunit": "^9.5.4",
+        "phpunit/phpunit": "^10.5.38 || ^11.4.3",
         "friendsofphp/php-cs-fixer": "^3.0",
         "monolog/monolog": "^3.0.0",
-        "phpstan/phpstan": "^0.12.84",
-        "phpstan/phpstan-strict-rules": "^0.12.9",
-        "phpstan/phpstan-phpunit": "^0.12.17",
-        "softlinecy/pjbserver-tools": "^6.0.0",
-        "infection/infection": "^0.27.2",
-        "dms/phpunit-arraysubset-asserts": "^v0.2.1"
+        "phpstan/phpstan": "^1.12.11 || ^2.0.2",
+        "phpstan/phpstan-strict-rules": "^1.6.1 || ^2.0.0",
+        "phpstan/phpstan-phpunit": "^1.4.1 || ^2.0.0",
+        "softlinecy/pjbserver-tools": "^7.0.0",
+        "infection/infection": "^0.29.8",
+        "dms/phpunit-arraysubset-asserts": "^v0.5.0",
+        "rector/rector": "^1.2.10",
+        "phpspec/prophecy": "^1.0",
+        "phpspec/prophecy-phpunit": "^2.3"
     },
     "scripts": {
         "check": [
@@ -57,13 +67,16 @@
         "phpstan": "vendor/bin/phpstan analyse -c phpstan.neon src",
         "build-doc": "mkdocs build && sami.phar update ./.sami.php",
         "apigen": "apigen.phar generate --config=./.apigen.yml",
-        "sami": "sami.phar update ./.sami.php"
+        "sami": "sami.phar update ./.sami.php",
+        "rector": "@php vendor/bin/rector process",
+        "rector:dry": "@php vendor/bin/rector process --dry-run"
     },
     "suggest": {
         "monolog/monolog": "PSR-3 comptatible logger"
     },
     "archive": {
-        "exclude": ["infection.local.json", ".travis", "requirements.txt", "psalm.xml", ".sami.php", "phpstan.neon", "test", "doc", ".travis", ".travis.yml", ".codeclimate.yml", ".coveralls.yml", ".scrutinizer.yml", ".php_cs", ".gitignore", "phpcs.xml"]
+        "exclude": ["infection.local.json", ".travis", "requirements.txt", "psalm.xml", ".sami.php", "phpstan.neon",
+            "tests", "doc", ".travis", ".travis.yml", ".codeclimate.yml", ".coveralls.yml", ".scrutinizer.yml", ".gitignore", "phpcs.xml"]
     },
     "config": {
         "allow-plugins": {

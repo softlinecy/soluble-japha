@@ -44,8 +44,6 @@ class JavaException extends Exception implements JavaExceptionInterface
      * @param string    $stackTrace
      * @param string    $javaClassName   originating java FQCN
      * @param int       $code
-     * @param Exception $driverException
-     * @param Exception $previous
      */
     public function __construct(
         $message,
@@ -60,15 +58,13 @@ class JavaException extends Exception implements JavaExceptionInterface
         $this->setCause($javaCause);
         $this->setStackTrace($stackTrace);
         $this->setJavaClassName($javaClassName);
-        if ($driverException !== null) {
+        if ($driverException instanceof \Exception) {
             $this->setDriverException($driverException);
         }
     }
 
     /**
      * Set original exception as throw by the driver.
-     *
-     * @param Exception $driverException
      */
     private function setDriverException(Exception $driverException): void
     {
@@ -77,8 +73,6 @@ class JavaException extends Exception implements JavaExceptionInterface
 
     /**
      * Return underlying driver exception.
-     *
-     * @return Exception|null
      */
     public function getDriverException(): ?Exception
     {

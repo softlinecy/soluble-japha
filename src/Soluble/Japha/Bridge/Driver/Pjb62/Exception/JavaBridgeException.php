@@ -41,7 +41,7 @@ use Exception;
 
 class JavaBridgeException extends Exception
 {
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getMessage();
     }

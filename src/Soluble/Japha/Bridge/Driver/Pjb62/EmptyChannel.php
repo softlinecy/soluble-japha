@@ -40,40 +40,22 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Exception\RuntimeException;
 use Soluble\Japha\Bridge\Exception;
 
 class EmptyChannel
 {
-    /**
-     * @var SocketHandler
-     */
-    protected $handler;
-
     /**
      * @var string|null
      */
     private $res;
 
     /**
-     * @var int
-     */
-    protected $recv_size;
-
-    /**
-     * @var int
-     */
-    protected $send_size;
-
-    /**
-     * @param SocketHandler $handler
      * @param int           $recv_size
      * @param int           $send_size
      */
-    public function __construct(SocketHandler $handler, $recv_size, $send_size)
+    public function __construct(protected SocketHandler $handler, protected $recv_size, protected $send_size)
     {
-        $this->send_size = $send_size;
-        $this->recv_size = $recv_size;
-        $this->handler = $handler;
     }
 
     public function fwrite(string $data): ?int
@@ -107,7 +89,7 @@ class EmptyChannel
     protected function error(): void
     {
         $msg = 'An unchecked exception occured during script execution. Please check the server log files for details.';
-        throw new Exception\RuntimeException($msg);
+        throw new RuntimeException($msg);
     }
 
     protected function checkA($peer): void
@@ -116,6 +98,7 @@ class EmptyChannel
         if ($val !== 'A') {
             fclose($peer);
         }
+        
         if ($val !== 'A' && $val !== 'E') {
             $this->error();
         }

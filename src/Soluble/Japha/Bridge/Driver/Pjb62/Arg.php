@@ -40,12 +40,15 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\JavaException;
+
 class Arg
 {
     /**
      * @var Client
      */
     public $client;
+    
     /**
      * @var string
      */
@@ -55,7 +58,9 @@ class Arg
      * @var SimpleFactory
      */
     public $factory;
+    
     public $val;
+    
     /**
      * @var string
      */
@@ -66,34 +71,23 @@ class Arg
      */
     public $type;
 
-    /**
-     * @param Client $client
-     */
     public function __construct(Client $client)
     {
         $this->client = $client;
         $this->factory = $client->simpleFactory;
     }
 
-    /**
-     * @param mixed $val
-     */
-    public function linkResult(&$val): void
+    public function linkResult(mixed &$val): void
+    {
+        $this->val = &$val;
+    }
+
+    public function setResult(mixed $val): void
     {
         $this->val = &$val;
     }
 
     /**
-     * @param mixed $val
-     */
-    public function setResult($val): void
-    {
-        $this->val = &$val;
-    }
-
-    /**
-     * @param bool $wrap
-     *
      * @return JavaType|string
      */
     public function getResult(bool $wrap)
@@ -102,24 +96,18 @@ class Arg
 
         $factory = $this->factory;
         $this->factory = $this->client->simpleFactory;
-        if ($rc instanceof \Soluble\Japha\Bridge\Driver\Pjb62\Exception\JavaException) {
+        if ($rc instanceof JavaException) {
             $factory->checkResult($rc);
         }
 
         return $rc;
     }
 
-    /**
-     * @param SimpleFactory $factory
-     */
     public function setFactory(SimpleFactory $factory): void
     {
         $this->factory = $factory;
     }
 
-    /**
-     * @param string $string
-     */
     public function setException(string $string): void
     {
         $this->exception = $string;

@@ -46,15 +46,11 @@ interface JavaType extends Interfaces\JavaType
 {
     /**
      * Return object id.
-     *
-     * @return int
      */
     public function get__java(): int;
 
     /**
      * Return java object id.
-     *
-     * @return int
      */
     public function __getJavaInternalObjectId(): int;
 
@@ -64,22 +60,12 @@ interface JavaType extends Interfaces\JavaType
     public function get__signature(): ?string;
 
     /**
-     * @param string $key
-     *
      * @return mixed
      */
     public function __get(string $key);
 
-    /**
-     * @param string $key
-     * @param mixed  $val
-     */
-    public function __set(string $key, $val): void;
+    public function __set(string $key, mixed $val): void;
 
-    /**
-     * @param string $name
-     * @param array  $arguments
-     */
     public function __call(string $name, array $arguments);
 
     public function __cast(string $type);
@@ -88,8 +74,5 @@ interface JavaType extends Interfaces\JavaType
 
     public function __wakeup();
 
-    /**
-     * @return string
-     */
     public function __toString(): string;
 }

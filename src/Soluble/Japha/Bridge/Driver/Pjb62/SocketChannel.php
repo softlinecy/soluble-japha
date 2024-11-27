@@ -42,37 +42,13 @@ use Soluble\Japha\Bridge\Exception\BrokenConnectionException;
 abstract class SocketChannel extends EmptyChannel
 {
     /**
-     * @var resource
-     */
-    public $peer;
-
-    /**
-     * @var string
-     */
-    public $host;
-
-    /**
-     * @var int
-     */
-    protected $recv_size;
-
-    /**
-     * @var int
-     */
-    protected $send_size;
-
-    /**
      * @param resource $peer
      * @param string   $host
      * @param int      $recv_size
      * @param int      $send_size
      */
-    public function __construct($peer, $host, $recv_size, $send_size)
+    public function __construct(public $peer, public $host, protected $recv_size, protected $send_size)
     {
-        $this->peer = $peer;
-        $this->host = $host;
-        $this->recv_size = $recv_size;
-        $this->send_size = $send_size;
     }
 
     /**

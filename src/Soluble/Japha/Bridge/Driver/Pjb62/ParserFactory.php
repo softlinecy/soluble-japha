@@ -40,15 +40,12 @@ namespace Soluble\Japha\Bridge\Driver\Pjb62;
 class ParserFactory
 {
     public const PARSER_NATIVE = 'NATIVE';
+    
     public const PARSER_SIMPLE = 'SIMPLE';
 
-    /**
-     * @var ParserInterface
-     */
-    protected $parser;
+    protected SimpleParser|NativeParser $parser;
 
     /**
-     * @param Client $handler
      * @param bool   $forceSimpleParser - Always use SimpleParser, even if NativeParser can be used
      */
     public function __construct(Client $handler, bool $forceSimpleParser = false)
@@ -69,11 +66,7 @@ class ParserFactory
         $this->parser->parse();
     }
 
-    /**
-     * @param string $str
-     *
-     * @return string
-     */
+
     public function getData(string $str): string
     {
         return $this->parser->getData($str);

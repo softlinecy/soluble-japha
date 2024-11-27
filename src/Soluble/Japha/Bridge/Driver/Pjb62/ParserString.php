@@ -56,17 +56,11 @@ class ParserString
      */
     public $length;
 
-    /**
-     * @return string
-     */
     public function toString(): string
     {
         return $this->getString();
     }
 
-    /**
-     * @return string
-     */
     public function getString(): string
     {
         return substr($this->string, $this->off, $this->length);

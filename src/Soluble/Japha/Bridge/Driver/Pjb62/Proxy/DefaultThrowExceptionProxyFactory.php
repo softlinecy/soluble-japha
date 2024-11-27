@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62\Proxy;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\ThrowExceptionProxyFactory;
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\JavaException;
+use Soluble\Japha\Bridge\Exception\JavaExceptionInterface;
 use Psr\Log\LoggerInterface;
-use Soluble\Japha\Bridge\Driver\Pjb62;
 use Soluble\Japha\Bridge\Exception;
 use Soluble\Japha\Bridge\Driver\Pjb62\Client;
 
-class DefaultThrowExceptionProxyFactory extends Pjb62\ThrowExceptionProxyFactory
+class DefaultThrowExceptionProxyFactory extends ThrowExceptionProxyFactory
 {
 
     protected string $defaultException = 'JavaException';
@@ -23,31 +25,21 @@ class DefaultThrowExceptionProxyFactory extends Pjb62\ThrowExceptionProxyFactory
         //'NullPointerException' => '/Cause: java.lang.NullPointerException/'
     ];
 
-    /**
-     * @param Client          $client
-     * @param LoggerInterface $logger
-     */
     public function __construct(Client $client, protected LoggerInterface $logger)
     {
         parent::__construct($client);
     }
 
     /**
-     * @param Pjb62\Exception\JavaException $result
-     *
      * @throws Exception\JavaExceptionInterface
      */
-    public function checkResult(Pjb62\Exception\JavaException $result): void
+    public function checkResult(JavaException $result): void
     {
         throw $this->getExceptionFromResult($result);
     }
 
-    /**
-     * @param Pjb62\Exception\JavaException $result
-     *
-     * @return Exception\JavaExceptionInterface
-     */
-    private function getExceptionFromResult(Pjb62\Exception\JavaException $result): Exception\JavaExceptionInterface
+    
+    private function getExceptionFromResult(JavaException $result): JavaExceptionInterface
     {
         $message = (string) $result->__get('message')->__toString();
 
@@ -66,28 +58,21 @@ class DefaultThrowExceptionProxyFactory extends Pjb62\ThrowExceptionProxyFactory
         $message = preg_replace('/user=([^&\ ]+)|password=([^&\ ]+)/', '****', $message);
         $stackTrace = $result->getCause()->__toString();
         $code = $result->getCode();
-
-        $driverException = null;
-        if ($result instanceof \Exception) {
-            $driverException = $result;
-        }
+        $driverException = $result;
 
         // Getting original class name from cause
-        preg_match('/Cause: ([^:]+):/', $message, $matches);
-        if (count($matches) > 1) {
-            $javaExceptionClass = $matches[1];
-        } else {
-            $javaExceptionClass = 'Unknown java exception class';
-        }
+        preg_match('/Cause: ([^:]+):/', (string) $message, $matches);
+        $javaExceptionClass = count($matches) > 1 ? $matches[1] : 'Unknown java exception class';
 
         // Getting cause from message
-        $tmp = explode('Cause: ', $message);
+        $tmp = explode('Cause: ', (string) $message);
         if (count($tmp) > 1) {
             array_shift($tmp);
             $cause = trim(implode(', ', $tmp));
         } else {
             $cause = $message;
         }
+        
         $e = new $cls(
             $message,
             $cause,
@@ -110,7 +95,7 @@ class DefaultThrowExceptionProxyFactory extends Pjb62\ThrowExceptionProxyFactory
             $exceptionClass,
             $e->getMessage(),
             $e->getCode() ?? '?',
-            get_class($e)
+            $e::class
         ));
     }
 }

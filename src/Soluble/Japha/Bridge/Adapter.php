@@ -12,6 +12,11 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge;
 
+use Soluble\Japha\Bridge\Exception\UnsupportedDriverException;
+use Soluble\Japha\Interfaces\JavaObject;
+use Soluble\Japha\Interfaces\JavaClass;
+use Soluble\Japha\Bridge\Adapter\System;
+use Soluble\Japha\Bridge\Driver\DriverInterface;
 use Soluble\Japha\Bridge\Driver\Pjb62\Pjb62Driver;
 use Soluble\Japha\Interfaces;
 use Psr\Log\LoggerInterface;
@@ -31,17 +36,14 @@ class Adapter
     /**
      * @var Driver\AbstractDriver
      */
-    protected $driver;
+    protected object $driver;
 
     /**
      * @var Adapter\System
      */
     protected $system;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected ?LoggerInterface $logger;
 
     /**
      * Constructor.
@@ -62,17 +64,18 @@ class Adapter
      */
     public function __construct(array $options, LoggerInterface $logger = null)
     {
-        if ($logger === null) {
+        if (!$logger instanceof LoggerInterface) {
             $logger = new NullLogger();
         }
+        
         $this->logger = $logger;
 
-        $driver = !isset($options['driver']) ? self::DEFAULT_DRIVER : strtolower($options['driver']);
+        $driver = isset($options['driver']) ? strtolower((string) $options['driver']) : self::DEFAULT_DRIVER;
 
         $driver_class = self::$registeredDrivers[$driver] ?? null;
 
         if ($driver_class === null) {
-            throw new Exception\UnsupportedDriverException(__METHOD__." Driver '$driver' is not supported");
+            throw new UnsupportedDriverException(__METHOD__.sprintf(" Driver '%s' is not supported", $driver));
         }
 
         $this->driver = new $driver_class($options, $logger);
@@ -99,10 +102,8 @@ class Adapter
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
      *
      * @see \Soluble\Japha\Bridge\Adapter::javaClass for information about classes
-     *
-     * @return Interfaces\JavaObject
      */
-    public function java(string $class, ...$args): Interfaces\JavaObject
+    public function java(string $class, ...$args): JavaObject
     {
         return $this->driver->instanciate($class, ...$args);
     }
@@ -127,10 +128,8 @@ class Adapter
      * @throws \Soluble\Japha\Bridge\Exception\ClassNotFoundException
      *
      * @param string $class Java class name (FQCN)
-     *
-     * @return Interfaces\JavaClass
      */
-    public function javaClass(string $class): Interfaces\JavaClass
+    public function javaClass(string $class): JavaClass
     {
         return $this->driver->getJavaClass($class);
     }
@@ -142,12 +141,10 @@ class Adapter
      * @throws \Soluble\Japha\Bridge\Exception\ClassNotFoundException
      * @throws \Soluble\Japha\Bridge\Exception\InvalidArgumentException
      *
-     * @param Interfaces\JavaObject                             $javaObject
      * @param string|Interfaces\JavaObject|Interfaces\JavaClass $className  java class name
      *
-     * @return bool
      */
-    public function isInstanceOf(Interfaces\JavaObject $javaObject, $className): bool
+    public function isInstanceOf(JavaObject $javaObject, $className): bool
     {
         return $this->driver->isInstanceOf($javaObject, $className);
     }
@@ -157,11 +154,9 @@ class Adapter
      *
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
      *
-     * @param Interfaces\JavaObject $javaObject
      *
-     * @return string
      */
-    public function getClassName(Interfaces\JavaObject $javaObject): string
+    public function getClassName(JavaObject $javaObject): string
     {
         return $this->driver->getClassName($javaObject);
     }
@@ -172,10 +167,8 @@ class Adapter
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
      *
      * @param Interfaces\JavaObject|null $javaObject
-     *
-     * @return bool
      */
-    public function isNull(Interfaces\JavaObject $javaObject = null): bool
+    public function isNull(JavaObject $javaObject = null): bool
     {
         return $this->driver->isNull($javaObject);
     }
@@ -185,24 +178,20 @@ class Adapter
      *
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
      *
-     * @param Interfaces\JavaObject $javaObject
      *
-     * @return bool
      */
-    public function isTrue(Interfaces\JavaObject $javaObject): bool
+    public function isTrue(JavaObject $javaObject): bool
     {
         return $this->driver->isTrue($javaObject);
     }
 
     /**
      * Return system properties.
-     *
-     * @return Adapter\System
      */
-    public function getSystem(): Adapter\System
+    public function getSystem(): System
     {
         if ($this->system === null) {
-            $this->system = new Adapter\System($this);
+            $this->system = new System($this);
         }
 
         return $this->system;
@@ -215,21 +204,18 @@ class Adapter
      *
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
      *
-     * @param Interfaces\JavaObject $javaObject
      *
      * @return mixed
      */
-    public function values(Interfaces\JavaObject $javaObject)
+    public function values(JavaObject $javaObject)
     {
         return $this->driver->values($javaObject);
     }
 
     /**
      * Return underlying driver.
-     *
-     * @return Driver\DriverInterface
      */
-    public function getDriver(): Driver\DriverInterface
+    public function getDriver(): DriverInterface
     {
         return $this->driver;
     }
@@ -244,8 +230,6 @@ class Adapter
      *
      * @throws \Soluble\Japha\Util\Exception\UnsupportedTzException
      * @throws \Soluble\Japha\Bridge\Exception\BrokenConnectionException
-     *
-     * @param string $timezone
      */
     private function setJavaDefaultTimezone(string $timezone): void
     {

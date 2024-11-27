@@ -11,6 +11,13 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Exception\InvalidUsageException;
+use Soluble\Japha\Bridge\Exception\InvalidArgumentException;
+use Soluble\Japha\Bridge\Driver\Pjb62\Proxy\DefaultThrowExceptionProxyFactory;
+use Soluble\Japha\Bridge\Exception\BrokenConnectionException;
+use Soluble\Japha\Interfaces\JavaType;
+use Soluble\Japha\Interfaces\JavaObject;
+use Soluble\Japha\Bridge\Exception\AuthenticationException;
 use Soluble\Japha\Bridge\Exception;
 use Soluble\Japha\Interfaces;
 use Soluble\Japha\Bridge\Driver\ClientInterface;
@@ -69,15 +76,7 @@ class PjbProxyClient implements ClientInterface
      */
     protected $compatibilityOption;
 
-    /**
-     * @var ArrayObject
-     */
-    protected $options;
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected \ArrayObject $options;
 
     /**
      * @var string|null
@@ -100,16 +99,11 @@ class PjbProxyClient implements ClientInterface
      * @throws Exception\ConnectionException
      *
      * @see PjbProxyClient::getInstance()
-     *
-     * @param array           $options
-     * @param LoggerInterface $logger
      */
-    protected function __construct(array $options, LoggerInterface $logger)
+    protected function __construct(array $options, protected LoggerInterface $logger)
     {
         $this->options = new ArrayObject(array_merge($this->defaultOptions, $options));
         self::$instanceOptionsKey = serialize((array) $this->options);
-
-        $this->logger = $logger;
         $this->loadClient();
     }
 
@@ -159,32 +153,29 @@ class PjbProxyClient implements ClientInterface
      * @throws Exception\ConnectionException
      * @throws \Soluble\Japha\Bridge\Driver\Pjb62\Exception\BrokenConnectionException
      *
-     * @param array|null           $options
      * @param LoggerInterface|null $logger  any psr3 logger
      *
-     * @return PjbProxyClient
      */
     public static function getInstance(?array $options = null, ?LoggerInterface $logger = null): self
     {
         if (self::$instance === null) {
             if ($options === null) {
-                throw new Exception\InvalidUsageException(
+                throw new InvalidUsageException(
                     'Cannot instanciate PjbProxyClient without "$options" the first time, '.
                     'or the instance have been unregistered since'
                 );
             }
-            if ($logger === null) {
+            
+            if (!$logger instanceof LoggerInterface) {
                 $logger = new NullLogger();
             }
+            
             self::$instance = new self($options, $logger);
         }
 
         return self::$instance;
     }
 
-    /**
-     * @return bool
-     */
     public static function isInitialized(): bool
     {
         return self::$instance !== null;
@@ -202,7 +193,7 @@ class PjbProxyClient implements ClientInterface
             $options = $this->options;
 
             if (!isset($options['servlet_address'])) {
-                throw new Exception\InvalidArgumentException(__METHOD__.' Missing required parameter servlet_address');
+                throw new InvalidArgumentException(__METHOD__.' Missing required parameter servlet_address');
             }
 
             $connection = static::parseServletUrl($options['servlet_address']);
@@ -224,7 +215,7 @@ class PjbProxyClient implements ClientInterface
             self::$client = new Client($params, $this->logger);
 
             // Added in order to work with custom exceptions
-            self::getClient()->throwExceptionProxyFactory = new Proxy\DefaultThrowExceptionProxyFactory(self::$client, $this->logger);
+            self::getClient()->throwExceptionProxyFactory = new DefaultThrowExceptionProxyFactory(self::$client, $this->logger);
 
             $this->bootstrap();
         }
@@ -233,14 +224,13 @@ class PjbProxyClient implements ClientInterface
     /**
      * Return Pjb62 internal client.
      *
-     * @return Client
      *
      * @throws Exception\BrokenConnectionException
      */
     public static function getClient(): Client
     {
         if (self::$client === null) {
-            throw new Exception\BrokenConnectionException('Client is not registered');
+            throw new BrokenConnectionException('Client is not registered');
         }
 
         return self::$client;
@@ -287,9 +277,9 @@ class PjbProxyClient implements ClientInterface
      *
      * @return mixed
      */
-    public function invokeMethod(?Interfaces\JavaType $object = null, string $method, array $args = [])
+    public function invokeMethod(string $method, ?JavaType $object = null, array $args = [])
     {
-        $id = ($object === null) ? 0 : $object->__getJavaInternalObjectId();
+        $id = ($object instanceof JavaType) ? $object->__getJavaInternalObjectId() : 0;
 
         return self::getClient()->invokeMethod($id, $method, $args);
     }
@@ -299,13 +289,11 @@ class PjbProxyClient implements ClientInterface
      *
      * @throws \Soluble\Japha\Bridge\Driver\Pjb62\Exception\BrokenConnectionException
      *
-     * @param Interfaces\JavaType $object
      *
-     * @return string
      *
      * @throws IllegalArgumentException
      */
-    public function inspect(Interfaces\JavaType $object): string
+    public function inspect(JavaType $object): string
     {
         return self::getClient()->invokeMethod(0, 'inspect', [$object]);
     }
@@ -316,20 +304,18 @@ class PjbProxyClient implements ClientInterface
      * @throws Exception\InvalidArgumentException
      * @throws \Soluble\Japha\Bridge\Driver\Pjb62\Exception\BrokenConnectionException
      *
-     * @param Interfaces\JavaObject                                             $object
      * @param JavaType|string|Interfaces\JavaClass|Interfaces\JavaObject|string $class
      *
-     * @return bool
      */
-    public function isInstanceOf(Interfaces\JavaObject $object, $class): bool
+    public function isInstanceOf(JavaObject $object, $class): bool
     {
         if (is_string($class)) {
             // Attempt to initiate a class
             $name = $class;
             // Will eventually throws ClassNotFoundException
             $class = $this->getJavaClass($name);
-        } elseif (!$class instanceof Interfaces\JavaObject) {
-            throw new Exception\InvalidArgumentException(__METHOD__.'Class $class parameter must be of Interfaces\JavaClass, Interfaces\JavaObject or string');
+        } elseif (!$class instanceof JavaObject) {
+            throw new InvalidArgumentException(__METHOD__.'Class $class parameter must be of Interfaces\JavaClass, Interfaces\JavaObject or string');
         }
 
         return self::getClient()->invokeMethod(0, 'instanceOf', [$object, $class]);
@@ -369,11 +355,10 @@ class PjbProxyClient implements ClientInterface
      *
      * @throws \Soluble\Japha\Bridge\Driver\Pjb62\Exception\BrokenConnectionException
      *
-     * @param Interfaces\JavaObject $object
      *
      * @return mixed
      */
-    public function getValues(Interfaces\JavaObject $object)
+    public function getValues(JavaObject $object)
     {
         return self::getClient()->invokeMethod(0, 'getValues', [$object]);
     }
@@ -404,16 +389,12 @@ class PjbProxyClient implements ClientInterface
         self::getClient()->invokeMethod(0, 'clearLastException', []);
     }
 
-    /**
-     * @param Client $client
-     *
-     * @return string
-     */
+    
     public function getCompatibilityOption(Client $client = null): string
     {
         if ($this->compatibilityOption === null) {
-            if ($client === null) {
-                $client = $client = self::getClient();
+            if (!$client instanceof Client) {
+                $client = self::getClient();
             }
 
             $java_prefer_values = (int) $this->getOption('java_prefer_values');
@@ -422,6 +403,7 @@ class PjbProxyClient implements ClientInterface
             if (is_int($java_log_level)) {
                 $compatibility |= 128 | (7 & $java_log_level) << 2;
             }
+            
             $this->compatibilityOption = \chr($compatibility);
         }
 
@@ -434,7 +416,6 @@ class PjbProxyClient implements ClientInterface
      *
      * @throws Exception\InvalidArgumentException
      *
-     * @param string $servlet_address
      *
      * @return array associative array with 'servlet_host' and 'servlet_uri'
      */
@@ -443,25 +424,24 @@ class PjbProxyClient implements ClientInterface
         $url = parse_url($servlet_address);
 
         if ($url === false || !isset($url['host'])) {
-            throw new Exception\InvalidArgumentException(__METHOD__." Cannot parse url '$servlet_address'");
+            throw new InvalidArgumentException(__METHOD__.sprintf(" Cannot parse url '%s'", $servlet_address));
         }
 
         $scheme = '';
         if (isset($url['scheme'])) {
             $scheme = $url['scheme'] === 'https' ? 'ssl://' : $scheme;
         }
+        
         $host = $url['host'];
         $port = $url['port'];
         $path = $url['path'] ?? '';
 
-        $infos = [
-            'servlet_host' => "{$scheme}{$host}:{$port}",
+        return [
+            'servlet_host' => sprintf('%s%s:%d', $scheme, $host, $port),
             'servlet_uri' => $path,
             'auth_user' => $url['user'] ?? null,
             'auth_password' => $url['pass'] ?? null,
         ];
-
-        return $infos;
     }
 
     /**
@@ -469,13 +449,11 @@ class PjbProxyClient implements ClientInterface
      */
     protected function bootstrap($options = []): void
     {
-        register_shutdown_function(['Soluble\Japha\Bridge\Driver\Pjb62\PjbProxyClient', 'unregisterInstance']);
+        register_shutdown_function([\Soluble\Japha\Bridge\Driver\Pjb62\PjbProxyClient::class, 'unregisterInstance']);
     }
 
     /**
      * Return options.
-     *
-     * @return ArrayObject
      */
     public function getOptions(): ArrayObject
     {
@@ -490,7 +468,7 @@ class PjbProxyClient implements ClientInterface
     public function getOption(string $name)
     {
         if (!$this->options->offsetExists($name)) {
-            throw new Exception\InvalidArgumentException("Option '$name' does not exists'");
+            throw new InvalidArgumentException(sprintf("Option '%s' does not exists'", $name));
         }
 
         return $this->options[$name];
@@ -509,22 +487,19 @@ class PjbProxyClient implements ClientInterface
     public static function unregisterAndThrowBrokenConnectionException(string $message = null, int $code = null): void
     {
         if (self::$instance !== null) {
-            $message = $message ?? 'undefined message';
+            $message ??= 'undefined message';
 
-            switch ($code) {
-                case 401:
-                    $exception = new Exception\AuthenticationException(sprintf(
-                        'Java bridge authentication failure: code: %s',
-                        $code
-                    ));
-                    break;
-                default:
-                    $exception = new Exception\BrokenConnectionException(sprintf(
-                        'Java bridge broken connection: "%s" (code: %s)',
-                        $message,
-                        $code
-                    ));
-            }
+            $exception = match ($code) {
+                401 => new AuthenticationException(sprintf(
+                    'Java bridge authentication failure: code: %s',
+                    $code
+                )),
+                default => new BrokenConnectionException(sprintf(
+                    'Java bridge broken connection: "%s" (code: %s)',
+                    $message,
+                    $code
+                )),
+            };
             try {
                 self::$instance->getLogger()->critical(sprintf(
                     '[soluble-japha] BrokenConnectionException to "%s": "%s" (code: "%s")',
@@ -532,14 +507,15 @@ class PjbProxyClient implements ClientInterface
                     $message,
                     $code ?? '?'
                 ));
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 // discard logger errors
             }
 
             self::unregisterInstance();
             throw $exception;
         }
-        throw new Exception\BrokenConnectionException('No instance to remove');
+        
+        throw new BrokenConnectionException('No instance to remove');
     }
 
     /**
@@ -557,7 +533,7 @@ class PjbProxyClient implements ClientInterface
             try {
                 self::$client->sendBuffer .= self::$client->protocol->getKeepAlive();
                 self::$client->protocol->flush();
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
             }
 
             // TODO MUST TEST, IT WAS REMOVED FROM FUNCTION
@@ -565,10 +541,10 @@ class PjbProxyClient implements ClientInterface
             // ADDED AN IF TO CHECK THE CHANNEL In CASE OF
             //
             if (isset(self::$client->protocol->handler->channel) &&
-                false === strpos(get_class(self::getClient()->protocol->handler->channel), '/EmptyChannel/')) {
+                !str_contains(self::getClient()->protocol->handler->channel::class, '/EmptyChannel/')) {
                 try {
                     self::$client->protocol->keepAlive();
-                } catch (\Throwable $e) {
+                } catch (\Throwable) {
                     // silently discard exceptions when unregistering
                 }
             }

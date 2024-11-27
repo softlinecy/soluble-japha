@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Driver\Pjb62\Exception\JavaException;
 use Soluble\Japha\Bridge\Driver\Pjb62\Utils\HelperFunctions;
 
 /**
@@ -62,11 +63,6 @@ class JavaProxy implements JavaType
     protected $__serialID;
 
     /**
-     * @var int
-     */
-    public $__java;
-
-    /**
      * @var string|null
      */
     public $__signature;
@@ -82,18 +78,15 @@ class JavaProxy implements JavaType
     public $__tempGlobalRef;
 
     /**
-     * @param int $java
+     * @param int $__java
      */
-    public function __construct($java, ?string $signature)
+    public function __construct(public $__java, ?string $signature)
     {
-        $this->__java = $java;
         $this->__signature = $signature;
         $this->__client = PjbProxyClient::getInstance()->getClient();
     }
 
     /**
-     * @param string $type
-     *
      * @return mixed
      */
     public function __cast(string $type)
@@ -120,6 +113,7 @@ class JavaProxy implements JavaType
         if ($this->__tempGlobalRef) {
             $this->__client->globalRef = $this->__tempGlobalRef;
         }
+        
         $this->__tempGlobalRef = null;
         $this->__java = $this->__client->invokeMethod(0, 'deserialize', $args);
     }
@@ -136,8 +130,6 @@ class JavaProxy implements JavaType
     }
 
     /**
-     * @param string $key
-     *
      * @return mixed
      */
     public function __get(string $key)
@@ -146,7 +138,6 @@ class JavaProxy implements JavaType
     }
 
     /**
-     * @param string $key
      * @param mixed  $val
      */
     public function __set(string $key, $val): void
@@ -159,25 +150,19 @@ class JavaProxy implements JavaType
         return $this->__client->invokeMethod($this->__java, $name, $arguments);
     }
 
-    /**
-     * @return string
-     */
     public function __toString(): string
     {
         try {
             return (string) $this->__client->invokeMethod(0, 'ObjectToString', [$this]);
-        } catch (Exception\JavaException $ex) {
-            $msg = 'Exception in Java::__toString(): '.HelperFunctions::java_truncate((string) $ex);
-            $this->__client->getLogger()->warning("[soluble-japha] $msg (".__METHOD__.')');
+        } catch (JavaException $javaException) {
+            $msg = 'Exception in Java::__toString(): '.HelperFunctions::java_truncate((string) $javaException);
+            $this->__client->getLogger()->warning(sprintf('[soluble-japha] %s (', $msg).__METHOD__.')');
             trigger_error($msg, E_USER_WARNING);
 
             return '';
         }
     }
 
-    /**
-     * @return int
-     */
     public function get__java(): int
     {
         return $this->__java;
@@ -185,8 +170,6 @@ class JavaProxy implements JavaType
 
     /**
      * Return java object id.
-     *
-     * @return int
      */
     public function __getJavaInternalObjectId(): int
     {

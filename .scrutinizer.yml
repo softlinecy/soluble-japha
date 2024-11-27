@@ -22,13 +22,13 @@ build:
             project_setup:
                 override: true
             environment:
-                php: 8.0
+                php: 8.2
             tests:
                 override: ['php-scrutinizer-run']
 
 filter:
     excluded_paths:
-        - "test/*"
+        - "tests/*"
         - "doc/*"
         # Everything in a root level "tests" directory will be excluded
     dependency_paths:

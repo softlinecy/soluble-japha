@@ -39,6 +39,7 @@ declare(strict_types=1);
 
 namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
+use Soluble\Japha\Bridge\Exception\RuntimeException;
 use Soluble\Japha\Bridge\Driver\Pjb62\Exception\BrokenConnectionException;
 use Soluble\Japha\Bridge\Exception;
 
@@ -46,16 +47,14 @@ class ChunkedSocketChannel extends SocketChannel
 {
     /**
      * @throws Exception\RuntimeException
-     *
-     * @param string $data
      */
     public function fwrite(string $data): int
     {
         $len = dechex(strlen($data));
-        $written = fwrite($this->peer, "${len}\r\n${data}\r\n");
+        $written = fwrite($this->peer, "{$len}\r\n{$data}\r\n");
         if (!$written) {
             $msg = 'Cannot write to socket';
-            throw new Exception\RuntimeException($msg);
+            throw new RuntimeException($msg);
         }
 
         return $written;
@@ -80,9 +79,11 @@ class ChunkedSocketChannel extends SocketChannel
             if (feof($this->peer) || $str === false) {
                 return null;
             }
+            
             $length -= strlen($str);
             $data .= $str;
         }
+        
         fgets($this->peer, 3);
 
         return $data;
