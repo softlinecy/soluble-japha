@@ -121,7 +121,7 @@ to take advantage of
 
 ## Requirements
 
-- Version `^7.0` requires PHP 8.2 ![PHP Version](http://img.shields.io/badge/php-8.2+-ff69b4.svg)
+- Version `^7.1` requires PHP 8.2+ and is compatible with Laravel 11 through Laravel 13 ![PHP Version](http://img.shields.io/badge/php-8.2+-ff69b4.svg)
 - Version `^4.0` requires PHP 8.1 ![PHP Version](http://img.shields.io/badge/php-8.1+-ff69b4.svg)
 - Version `^3.0` requires PHP 8.0 ![PHP Version](http://img.shields.io/badge/php-8.0+-ff69b4.svg)
 - Version `^2.0` requires PHP 7.1 ![PHP Version](http://img.shields.io/badge/php-7.1+-ff69b4.svg)
