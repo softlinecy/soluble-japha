@@ -1,6 +1,6 @@
 {
     "name": "softlinecy/japha",
-    "version": "7.1.0",
+    "version": "7.1.1",
     "description": "Soluble PHP Java bridge integration",
     "license": "MIT",
     "keywords": [
@@ -39,16 +39,16 @@
         "psr/log": "^2.0.0 || ^3.0.0"
     },
     "require-dev" : {
-        "phpunit/phpunit": "^10.5.38 || ^11.4.3",
+        "phpunit/phpunit": "^10.5.65 || ^11.4.3",
         "friendsofphp/php-cs-fixer": "^3.0",
         "monolog/monolog": "^3.0.0",
-        "phpstan/phpstan": "^1.12.11 || ^2.0.2",
-        "phpstan/phpstan-strict-rules": "^1.6.1 || ^2.0.0",
-        "phpstan/phpstan-phpunit": "^1.4.1 || ^2.0.0",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-strict-rules": "^2.0.0",
+        "phpstan/phpstan-phpunit": "^2.0.0",
         "softlinecy/pjbserver-tools": "^7.0.0",
         "infection/infection": "^0.29.8",
         "dms/phpunit-arraysubset-asserts": "^v0.5.0",
-        "rector/rector": "^1.2.10",
+        "rector/rector": "^2.0.0",
         "phpspec/prophecy": "^1.0",
         "phpspec/prophecy-phpunit": "^2.3"
     },

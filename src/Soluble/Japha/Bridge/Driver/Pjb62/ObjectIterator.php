@@ -68,17 +68,17 @@ class ObjectIterator implements Iterator
     }
 
     /**
-     * @return mixed
+     * @return void
      */
-    public function next()
+    public function next(): void
     {
-        return next($this->var);
+        next($this->var);
     }
 
     /**
      * @return int|string
      */
-    public function key()
+    public function key(): mixed
     {
         return key($this->var);
     }
@@ -86,7 +86,7 @@ class ObjectIterator implements Iterator
     /**
      * @return mixed
      */
-    public function current()
+    public function current(): mixed
     {
         return current($this->var);
     }
