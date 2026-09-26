@@ -58,7 +58,7 @@ class SimpleHttpHandler extends SocketHandler
     public $context;
 
     /**
-     * @var array
+     * @var array<string, string|null>
      */
     protected $cachedValues = [
         'getContext' => null
@@ -116,12 +116,9 @@ class SimpleHttpHandler extends SocketHandler
         return Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
     }
 
-    /**
-     * @return string
-     */
-    public function getContext()
+    public function getContext(): ?string
     {
-        if (!array_key_exists('getContext', $this->cachedValues)) {
+        if ($this->cachedValues['getContext'] === null) {
             $ctx = $this->getContextFromCgiEnvironment();
             if ($ctx) {
                 $this->cachedValues['getContext'] = sprintf('X_JAVABRIDGE_CONTEXT: %s', $ctx);
