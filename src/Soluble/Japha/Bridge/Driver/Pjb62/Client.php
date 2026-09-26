@@ -606,9 +606,7 @@ class Client
      */
     public function setExitCode(int $code): void
     {
-        if (isset($this->protocol)) {
-            $this->protocol->writeExitCode($code);
-        }
+        $this->protocol->writeExitCode($code);
     }
 
     /**
@@ -619,9 +617,7 @@ class Client
      */
     public function unref(?int $object): void
     {
-        if (isset($this->protocol)) {
-            $this->protocol->writeUnref($object);
-        }
+        $this->protocol->writeUnref($object);
     }
 
     /**

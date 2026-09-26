@@ -540,8 +540,7 @@ class PjbProxyClient implements ClientInterface
             // BECAUSE IT SIMPLY LOOKS LIKE THE LINES BEFORE
             // ADDED AN IF TO CHECK THE CHANNEL In CASE OF
             //
-            if (isset(self::$client->protocol->handler->channel) &&
-                !str_contains(self::getClient()->protocol->handler->channel::class, '/EmptyChannel/')) {
+            if (!str_contains(self::getClient()->protocol->handler->channel::class, '/EmptyChannel/')) {
                 try {
                     self::$client->protocol->keepAlive();
                 } catch (\Throwable) {

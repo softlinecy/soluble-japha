@@ -68,7 +68,7 @@ class JavaProxy implements JavaType
     public $__signature;
 
     /**
-     * @var \Soluble\Japha\Bridge\Driver\Pjb62\Client
+     * @var Client|null
      */
     public $__client;
 
