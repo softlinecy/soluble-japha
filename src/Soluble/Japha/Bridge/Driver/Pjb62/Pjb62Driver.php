@@ -103,7 +103,7 @@ class Pjb62Driver extends AbstractDriver
     {
         try {
             $class = $this->pjbProxyClient->getJavaClass($class_name);
-        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -164,7 +164,7 @@ class Pjb62Driver extends AbstractDriver
     {
         try {
             return $this->pjbProxyClient->invokeMethod($method, $javaObject, $args);
-        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -223,7 +223,7 @@ class Pjb62Driver extends AbstractDriver
     {
         try {
             $inspect = $this->pjbProxyClient->inspect($javaObject);
-        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -255,7 +255,7 @@ class Pjb62Driver extends AbstractDriver
     {
         try {
             return $this->pjbProxyClient->getValues($javaObject);
-        } catch (Pjb62BrokenConnectionException | InvalidUsageException $e) {
+        } catch (Pjb62BrokenConnectionException $e) {
             PjbProxyClient::unregisterInstance();
             throw new BrokenConnectionException($e->getMessage(), $e->getCode(), $e);
         }
@@ -353,7 +353,7 @@ class Pjb62Driver extends AbstractDriver
         // [class java.sql.DriverManager:
         $matches = [];
         preg_match('/^\[class (.+)\:/', $inspect, $matches);
-        if (!isset($matches[1]) || $matches[1] === '') {
+        if (!isset($matches[1])) {
             throw new UnexpectedException(__METHOD__.' Cannot determine class name');
         }
 

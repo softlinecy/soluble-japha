@@ -64,7 +64,7 @@ class JavaException extends Exception implements JavaType
     public $__signature;
 
     /**
-     * @var 'T'
+     * @var string|null
      */
     public $__hasDeclaredExceptions;
 

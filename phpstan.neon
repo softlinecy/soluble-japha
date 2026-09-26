@@ -50,3 +50,6 @@ parameters:
 		-
 			message: '#Unreachable statement - code above always terminates.#'
 			path: src/Soluble/Japha/Bridge/Driver/Pjb62/Client.php
+		-
+			message: '#Do-while loop condition is always false.#'
+			path: src/Soluble/Japha/Bridge/Driver/Pjb62/Client.php

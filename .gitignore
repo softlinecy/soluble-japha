@@ -20,3 +20,4 @@ infection-log.txt
 /.phpunit.result.cache
 /tmp
 .phpunit.cache
+plans/*

@@ -180,10 +180,6 @@ class SimpleParser implements ParserInterface
                 }
                 
                 $this->pos = strlen((string) $this->buf);
-                if ($this->pos == 0) {
-                    break;
-                }
-                
                 $this->c = 0;
             }
             

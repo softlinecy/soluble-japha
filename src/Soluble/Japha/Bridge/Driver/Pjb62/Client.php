@@ -298,8 +298,8 @@ class Client
      */
     public function handleRequests(): void
     {
-        $tail_call = false;
         do {
+            $tail_call = false;
             $this->arg = $this->simpleArg;
             $this->stack = [$this->arg];
             $this->idx = 0;

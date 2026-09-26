@@ -94,7 +94,7 @@ class DefaultThrowExceptionProxyFactory extends ThrowExceptionProxyFactory
             '[soluble-japha] Encountered exception %s: %s, code %s (%s)',
             $exceptionClass,
             $e->getMessage(),
-            $e->getCode() ?? '?',
+            $e->getCode(),
             $e::class
         ));
     }

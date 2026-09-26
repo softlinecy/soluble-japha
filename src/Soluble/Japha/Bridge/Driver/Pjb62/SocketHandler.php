@@ -105,7 +105,7 @@ class SocketHandler
      *
      * @return never
      */
-    public function shutdownBrokenConnection(string $msg = '', int $code = null): void
+    public function shutdownBrokenConnection(?string $msg = null, ?int $code = null): void
     {
         $msg ??= 'Broken connection: Unkown error, please see back end log for detail';
 

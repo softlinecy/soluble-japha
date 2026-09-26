@@ -87,7 +87,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
         $this->createSimpleChannel();
     }
 
-    public function shutdownBrokenConnection(string $msg = '', int $code = null): void
+    public function shutdownBrokenConnection(?string $msg = null, ?int $code = null): void
     {
         if (is_resource($this->socket)) {
             fflush($this->socket);

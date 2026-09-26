@@ -42,6 +42,7 @@ namespace Soluble\Japha\Bridge\Driver\Pjb62;
 
 use Soluble\Japha\Bridge\Driver\Pjb62\Exception\JavaException;
 use Soluble\Japha\Bridge\Driver\Pjb62\Utils\HelperFunctions;
+use Soluble\Japha\Interfaces\JavaObject;
 
 /**
  * Some annotations for java.lang.Object.

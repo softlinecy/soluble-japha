@@ -114,7 +114,7 @@ class TimeZone
     {
         if ($id instanceof DateTimeZone) {
             $phpTimezone = $id->getName();
-        } elseif (is_string($id) && trim($id) !== '') {
+        } elseif (trim($id) !== '') {
             $phpTimezone = $id;
         } else {
             throw new InvalidArgumentException('Method getTimeZone($id) require argument to be datetimeZone or a non empty string');

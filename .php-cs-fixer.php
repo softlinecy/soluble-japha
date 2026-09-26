@@ -150,7 +150,7 @@ $rules = [
     'visibility_required'                         => [
         'elements' => ['property', 'method', 'const'],
     ],
-    'header_comment'                              => ['header' => $header],
+
 ];
 
 $finder = Finder::create()

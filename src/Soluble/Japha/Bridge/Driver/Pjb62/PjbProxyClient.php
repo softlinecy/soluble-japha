@@ -484,7 +484,7 @@ class PjbProxyClient implements ClientInterface
      *
      * @return never
      */
-    public static function unregisterAndThrowBrokenConnectionException(string $message = null, int $code = null): void
+    public static function unregisterAndThrowBrokenConnectionException(?string $message = null, ?int $code = null): void
     {
         if (self::$instance !== null) {
             $message ??= 'undefined message';

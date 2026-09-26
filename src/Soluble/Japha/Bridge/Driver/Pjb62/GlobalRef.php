@@ -47,7 +47,7 @@ class GlobalRef
     /**
      * @param JavaType|object|null $object
      *
-     * @return int|JavaType|object
+     * @return int
      */
     public function add($object): int
     {

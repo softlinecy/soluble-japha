@@ -55,7 +55,7 @@ class ExceptionProxyFactory extends SimpleFactory
     }
 
     /**
-     * @return JavaProxy|ExceptionProxy|Exception\InternalException
+     * @return InternalException|ExceptionProxy
      */
     public function getProxy($result, ?string $signature, $exception, ?bool $wrap): InternalException|ExceptionProxy
     {
