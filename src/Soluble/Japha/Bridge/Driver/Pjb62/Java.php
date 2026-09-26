@@ -112,7 +112,7 @@ class Java extends AbstractJava
                     $sig .= '@u';
                     break;
                 default:
-                    throw new IllegalArgumentException($val);
+                    throw new IllegalArgumentException(gettype($val));
             }
         }
 
@@ -218,7 +218,7 @@ class Java extends AbstractJava
                     $sig .= '@u';
                     break;
                 default:
-                    throw new IllegalArgumentException($val);
+                    throw new IllegalArgumentException(gettype($val));
             }
         }
         
