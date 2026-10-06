@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.3 (2026-10-06)
+- Fix NativeParser on PHP 8.4: the `end` element handler called PHP's global `end()`, breaking every bridge call
+- Laravel 12-13 support
+- Fix iterator deprecations, initial context cache miss and proxy lifecycle handling
+- Report unsupported Java argument messages
+
 ## 7.0.0 (2024-11-27)
 - Laravel 11+ support
 - PHP 8.2+ support

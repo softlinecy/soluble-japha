@@ -70,8 +70,8 @@ class NativeParser implements ParserInterface
     {
         $this->parser = xml_parser_create();
         xml_parser_set_option($this->parser, XML_OPTION_CASE_FOLDING, 0);
-        xml_set_object($this->parser, $this);
-        xml_set_element_handler($this->parser, 'begin', 'end');
+        // Bare 'end' resolves to PHP's global end() since 8.4, so pass method callables.
+        xml_set_element_handler($this->parser, $this->begin(...), $this->end(...));
         xml_parse($this->parser, '<F>');
         $this->java_recv_size = $this->client->java_recv_size;
     }
